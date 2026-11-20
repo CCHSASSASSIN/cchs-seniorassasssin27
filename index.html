@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCHS Senior Assassin 26-27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: pool-deck scoreboard. One sticky tab bar, a status strip for today, then dense lists. */
+:root{
+  --bg:#eaf4f6; --surface:#ffffff; --ink:#0d2938; --muted:#4f6b79; --line:#c9dde2;
+  --accent:#f04e12; --accent-ink:#ffffff; --water:#0b8fae;
+  --go:#178a5c; --out:#c5223d; --warn:#b77900; --safe:#5b8f12; --finals:#6c4fd0; --off:#6b7f89;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#061a24; --surface:#0d2937; --ink:#e7f3f6; --muted:#8dafbc; --line:#1c4252;
+    --accent:#ff7641; --accent-ink:#1a0a02; --water:#41c6e2;
+    --go:#3fcf93; --out:#ff6b82; --warn:#f2b632; --safe:#a4d94a; --finals:#a892ff; --off:#8aa0ab;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#061a24; --surface:#0d2937; --ink:#e7f3f6; --muted:#8dafbc; --line:#1c4252;
+  --accent:#ff7641; --accent-ink:#1a0a02; --water:#41c6e2;
+  --go:#3fcf93; --out:#ff6b82; --warn:#f2b632; --safe:#a4d94a; --finals:#a892ff; --off:#8aa0ab;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+a{color:var(--water);font-weight:600}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px}
+header{background:var(--ink);color:var(--bg)}
+.brand{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding-block:18px 10px}
+.brand h1{font-size:clamp(1.5rem,5vw,2.3rem);font-weight:800;letter-spacing:-.01em}
+.brand h1 span{color:var(--accent)}
+.brand small{font-size:.85rem;opacity:.75}
+nav{background:var(--ink);position:sticky;top:0;z-index:5;border-bottom:3px solid var(--accent)}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:none;padding:10px 14px;color:var(--bg);opacity:.72;text-decoration:none;font-weight:600;border-radius:8px 8px 0 0;white-space:nowrap}
+.tabs a:hover{opacity:1}
+.tabs a[aria-current="page"]{background:var(--accent);color:var(--accent-ink);opacity:1}
+main{padding-block:22px 56px}
+section.view{display:none;flex-direction:column;gap:20px}
+section.view.on{display:flex}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* today strip */
+.today{display:grid;grid-template-columns:1.3fr 1fr;gap:0;padding:0;overflow:hidden}
+.today>div{padding:18px}
+.today .now{border-right:1px solid var(--line)}
+.today .big{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,5vw,2.4rem);line-height:1.05}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{--c:var(--off);display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.8rem;font-weight:700;
+  color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 45%,var(--surface))}
+.t-start{--c:var(--go)} .t-end{--c:var(--out)} .t-nofloaty{--c:var(--warn)} .t-bounty{--c:var(--out)} .t-break{--c:var(--water)}
+.t-safe{--c:var(--safe)} .t-finals{--c:var(--finals)} .t-off{--c:var(--off)} .t-in{--c:var(--go)} .t-out{--c:var(--out)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-family:var(--display);font-size:1.7rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:.8rem;color:var(--muted);font-weight:600}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+ul.list li{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line)}
+ul.list li:first-child{border-top:0}
+.when{flex:none;width:92px;font-size:.82rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:.92rem}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:hover{filter:brightness(1.07)}
+
+/* my target */
+.codeform{display:flex;flex-wrap:wrap;gap:10px}
+.codeform input{flex:1 1 200px;min-width:0;padding:11px 14px;border-radius:10px;border:2px solid var(--line);background:var(--bg);
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.15rem;letter-spacing:.14em;text-transform:uppercase}
+.err{color:var(--out);font-weight:600}
+.dossier{border:2px solid var(--ink);border-radius:14px;overflow:hidden}
+.dossier .top{background:var(--ink);color:var(--bg);padding:12px 18px;display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;align-items:baseline}
+.dossier .body{padding:18px;background:var(--surface)}
+.names{font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,6vw,2.3rem);line-height:1.1}
+.names s{color:var(--muted);text-decoration-thickness:2px}
+.locked{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--water) 14%,var(--surface)) 0 14px,var(--surface) 14px 28px)}
+
+details summary{cursor:pointer;font-weight:600;color:var(--water)}
+details .codeform{margin-top:10px}
+.loginform{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.loginform label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:700;color:var(--muted);min-width:0}
+.loginform input{padding:11px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);font-size:1rem;font-weight:500;color:var(--ink);min-width:0;width:100%}
+@media (max-width:760px){.loginform{grid-template-columns:1fr}}
+.notice{border-left:4px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--surface));padding:10px 12px;border-radius:8px;font-size:.92rem}
+.dmbox{border:1px dashed var(--line);border-radius:10px;padding:12px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.dmbox pre{margin:0;font-family:var(--body);white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem}
+.safe li{align-items:flex-start}.safe .chip{flex:none;width:58px;justify-content:center}
+/* teams */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar input{flex:1 1 220px;min-width:0;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:9px 14px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 20px}
+.team{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);min-width:0}
+.team .no{flex:none;width:34px;font-size:.8rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.team .who{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.team .who s{color:var(--muted);font-weight:500}
+.team.gone .who{color:var(--muted)}
+.kills{flex:none;font-size:.8rem;font-weight:700;color:var(--accent)}
+
+/* calendar */
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+table.sched{width:100%;border-collapse:collapse;font-size:.92rem}
+table.sched th,table.sched td{text-align:left;padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+table.sched th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:0}
+table.sched tr.cur td{background:color-mix(in srgb,var(--accent) 10%,var(--surface));font-weight:600}
+.scroll{overflow-x:auto}
+.months{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.cal .dow{font-size:.7rem;font-weight:700;color:var(--muted);text-align:center;padding-bottom:2px}
+.day{min-height:66px;border-radius:7px;padding:4px 5px;background:color-mix(in srgb,var(--c,transparent) 18%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--c,transparent) 45%,var(--line));display:flex;flex-direction:column;gap:2px;min-width:0}
+.day.blank{background:transparent;border-color:transparent}
+.day b{font-size:.82rem;font-variant-numeric:tabular-nums}
+.day span{font-size:.64rem;line-height:1.15;font-weight:600;overflow-wrap:anywhere;hyphens:auto}
+.day.is-today{outline:3px solid var(--accent);outline-offset:1px}
+.day.past{opacity:.55}
+
+/* rules */
+ol.rules{list-style:none;counter-reset:r;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-width:72ch}
+ol.rules li{counter-increment:r;display:grid;grid-template-columns:44px 1fr;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px 14px 10px}
+ol.rules li::before{content:counter(r);font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--accent);text-align:center;line-height:1.1}
+ol.rules strong{font-weight:700}
+footer{padding-bottom:40px;color:var(--muted);font-size:.82rem}
+.release{border-left:4px solid var(--accent);max-width:72ch}
+.rulescopy{max-height:55vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.rulescopy h2{display:none}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:600;cursor:pointer}
+.check input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+ol.rules .chip{margin-right:6px;vertical-align:1px}
+@media (max-width:760px){
+  .today{grid-template-columns:1fr}.today .now{border-right:0;border-bottom:1px solid var(--line)}
+  .stats{grid-template-columns:1fr 1fr}.cols,.months{grid-template-columns:1fr}
+  .day{min-height:58px;padding:3px}.day span{font-size:.58rem}
+}
+@media (prefers-reduced-motion:no-preference){.btn,.tabs a{transition:filter .15s,opacity .15s}}
+</style>
+</head>
+<body>
+<header><div class="wrap brand">
+  <h1>Senior <span>Assassin</span></h1>
+  <small>Cherry Creek High School · Class of 2027</small>
+</div></header>
+<nav aria-label="Sections"><div class="wrap tabs" id="tabs">
+  <a href="#home">Today</a><a href="#my-target">My Account</a><a href="#teams">Teams</a><a href="#calendar">Calendar</a><a href="#rules">Rules</a>
+</div></nav>
+
+<main class="wrap">
+<section class="view" id="v-home">
+  <div class="panel today">
+    <div class="now stack">
+      <div class="eyebrow" id="todayDate"></div>
+      <div class="big" id="roundLine"></div>
+      <p class="muted" id="roundSub"></p>
+    </div>
+    <div class="stack">
+      <div class="eyebrow">Today's status</div>
+      <div class="chips" id="todayChips"></div>
+      <p class="small" id="todayNote"></p>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div id="safeHome"></div>
+  <div class="cols">
+    <div class="panel stack"><h2>Latest eliminations</h2><div id="feed"></div></div>
+    <div class="stack" style="gap:20px">
+      <div class="panel stack"><h2>Coming up</h2><ul class="list" id="upcoming"></ul></div>
+      <div class="panel stack"><h2>Bounty board</h2><div id="bounty"></div></div>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="panel stack"><h2>Most eliminations</h2><div id="leaders"></div></div>
+    <div class="panel stack">
+      <h2>Got your target?</h2>
+      <p>Send the video to <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a> on Instagram and include your target's name. Unclear footage does not count.</p>
+      <p class="small muted">This page updates after the coordinators confirm the video.</p>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-my-target">
+  <div class="panel stack" id="loginPanel">
+    <h2>Log in</h2>
+    <p class="muted">Enter your team access code from the coordinators. Both partners use the same code. Don't share it: anyone with your code can see your target.</p>
+    <form class="codeform" id="codeForm" autocomplete="off">
+      <input id="codeInput" name="code" inputmode="text" maxlength="12" placeholder="XXXX-XXXX" aria-label="Team access code" spellcheck="false" autocapitalize="characters">
+      <button class="btn" type="submit" id="codeBtn">Log in</button>
+    </form>
+    <p class="err" id="codeErr" role="alert" hidden></p>
+    <p class="small muted">Don't have your code? DM <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a> from your own account and the coordinators will send it.</p>
+    <p class="small muted">Not signed up yet? Fill out the registration form from the coordinators first. New sign-ups are added to this site in batches.</p>
+  </div>
+  <div id="dossier"></div>
+</section>
+
+<section class="view" id="v-teams">
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Search a name or team number" aria-label="Search teams">
+    <div class="seg" role="group" aria-label="Filter teams">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="in" aria-pressed="false">Still in</button>
+      <button type="button" data-f="out" aria-pressed="false">Out</button>
+    </div>
+  </div>
+  <p class="small muted" id="teamCount"></p>
+  <div class="panel"><div class="roster" id="roster"></div></div>
+</section>
+
+<section class="view" id="v-calendar">
+  <div class="panel stack">
+    <h2>Round schedule</h2>
+    <p class="small muted">These are early dates and can change. Round 5 continues past the end of this calendar.</p>
+    <div class="scroll"><table class="sched"><thead><tr><th>Round</th><th>Starts</th><th>Ends</th><th>Notes</th></tr></thead><tbody id="sched"></tbody></table></div>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="months" id="months"></div>
+</section>
+
+<section class="view" id="v-rules">
+  <div class="stack">
+    <h2>Rules and regulations</h2>
+    <p class="muted" style="max-width:72ch">Read every rule before you play. Signing up means you agreed to all of them. Rules marked Updated or New changed on November 18, 2026.</p>
+  </div>
+  <div class="stack" id="rulesBody">
+  <div class="panel stack release">
+    <h3>Assumption of risk, release, and parental consent (required)</h3>
+    <p>CCHS Senior Assassin is an informal, student-organized game. It is not sponsored, organized, or supervised by Cherry Creek High School or the Cherry Creek School District. By playing, I understand that the game involves risks, including slips, falls, collisions, traffic hazards, damage to property (including phones and clothing), and being mistaken for a threat by the public or police. I voluntarily accept these risks. To the fullest extent permitted by Colorado law, I release the student coordinators from claims for injury, loss, or damage arising from my participation, including claims based on the coordinators' ordinary negligence. I am responsible for my own actions and for any damage I cause, and I agree to follow all laws and any instruction from police or property owners.</p>
+    <p><strong>If I am under 18, my parent or guardian must also agree to these rules and this release on my behalf (as permitted by C.R.S. § 13-22-107) before I can play.</strong> Every player must agree individually; one partner cannot agree for the other.</p>
+  </div>
+  <ol class="rules">
+    <li><p>Any and all water guns used to eliminate other players <strong>MUST be non realistic (plastic, colors other than black or grey) to count.</strong> If you submit a video in which you eliminate another player with a realistic water gun, the elimination will be voided and you risk being put on the bounty board. (This is to prevent security issues.)</p></li>
+    <li><p>School property and school events <strong>(YES, INCLUDING THE PARKING LOTS)</strong> are off limits to get players out (school sanctioned event/school property = no senior assassin eliminations). Any players caught participating in the game on school property or at a school event will be <strong>INSTANTLY ELIMINATED.</strong></p></li>
+    <li><p><span class="chip t-nofloaty">Updated</span>If you are attempting to eliminate a target within their home, you need <u>video recorded evidence</u> that an adult who lives in the home (such as a parent or guardian) invited you in <strong>WITH KNOWLEDGE THAT YOU WERE THERE TO ELIMINATE THEIR FAMILY MEMBER.</strong> Tricking anyone into inviting you into their home without their explicit permission to eliminate their family member is not allowed and will result in IMMEDIATE ELIMINATION. <strong>IF ANYONE TELLS YOU TO LEAVE THEIR PROPERTY, YOU MUST LEAVE INSTANTLY. FAILURE TO DO SO = ELIMINATION.</strong></p></li>
+    <li><p><span class="chip t-nofloaty">Updated</span>If you are attempting to eliminate a target within their vehicle, you are allowed to eliminate the target by opening their door <strong>if their door is unlocked</strong>. If their door is locked, you are not allowed to enter their car and eliminate them. The car must be parked with the engine off. Never open a car unless you are sure your target is inside, and never open, touch, or spray into a non-player's car. <strong>BY SIGNING UP FOR SENIOR ASSASSIN, YOU AGREE THAT ANY PLAYER HUNTING YOU HAS PERMISSION TO ELIMINATE YOU IN YOUR CAR IF IT IS UNLOCKED, OFF SCHOOL PROPERTY, AND PARKED WITH THE ENGINE OFF.</strong></p></li>
+    <li><p>Each player is assigned one target and receives their target's name via private message on Instagram. When you go to eliminate your target (or someone who is on the bounty board), you must take video evidence and send it to @cch.seniorassassin27 on Instagram. Please verify your target by sending their name when submitting footage. <strong>IF FOOTAGE IS UNCLEAR OR DOES NOT SHOW WHO WAS ELIMINATED, IT WILL NOT COUNT.</strong></p></li>
+    <li><p>Players are allowed to avoid elimination by wearing floaties <strong>(THESE FLOATIES MUST BE VISIBLE AND WORN ON THE ARM ABOVE THE ELBOW)</strong>. If the floaties are hidden by clothing (this can be argued with the organizers) then you are out if eliminated. There will be "no-floaty" days throughout the course of the game. These will be Saturdays (starting Saturday, November 28) and some major holidays <strong>(THIS WILL BE EXPLICITLY HIGHLIGHTED ON THE <a href="#calendar">CALENDAR</a>).</strong> Floaties will not provide any protection from elimination on these days.</p></li>
+    <li><p><span class="chip t-nofloaty">Updated</span>You may wait for your target to leave their house <strong>ONLY from a public sidewalk or street</strong>, or on the property itself if the property owner (usually the target's parent or guardian) has given permission. Players cannot give permission for property they don't own. <strong>You may NOT enter neighbors' yards, hide in bushes or behind houses, or look into windows.</strong> Any legal disputes or conflicts between players that result from this <strong>ARE NOT THE RESPONSIBILITY OF CCHS SENIOR ASSASSIN.</strong></p></li>
+    <li><p>No eliminations may be attempted from the inside of a moving vehicle (no "drive-bys"). Any attempt to do so will result in immediate ejection from the games with no refund.</p></li>
+    <li><p><span class="chip t-nofloaty">Updated</span>If police or any authority ask you to stop or produce ID, comply immediately. The game does not override legal requirements. <strong>Put the water gun down, keep your hands visible, tell them you are playing a water gun game, and never run from police or security.</strong></p></li>
+    <li><p>Senior Assassin coordinators have final and complete authority over any disputes between players. <strong>There will be no arguing.</strong></p></li>
+    <li><p>Participants are not allowed to be eliminated when they are <u>CLOCKED IN</u> at a place of work, or at a religious place of practice (such as a church, synagogue, mosque, temple, etc.). When they are out and off property, they are open to elimination if they are not wearing floaties.</p></li>
+    <li><p>If you are at a practice for a club sport (or other similar activities), you are still open to being eliminated. It is only the situations listed in Rule 11 that grant you protection from elimination. You must wear FLOATIES in order to be safe from elimination (NO GOGGLES!). <strong>IF WEARING FLOATIES ABOVE YOUR ELBOWS HINDERS YOUR ABILITY TO PLAY A SPORT (OR GO TO THE GYM) YOU MAY WEAR THEM ELSEWHERE (OR TAPE THEM TO YOUR UPPER ARMS IF INHIBITED BY PADS OR GEAR).</strong></p></li>
+    <li><p><strong>YOU MUST WEAR 2 FLOATIES. THEY DON'T HAVE TO BE INFLATED.</strong></p></li>
+    <li><p><span class="chip t-nofloaty">Updated</span><strong>BOUNTY BOARD:</strong> every <strong>Sunday night at 11:59 PM</strong> during a round (the first check is the first Sunday at least a week after the round starts), any team that has not eliminated <strong>at least one player on its target team</strong> that week goes on the <strong>bounty board for the rest of the round</strong>. Anyone still in the game can eliminate a team on the bounty board, and it counts. Breaks count toward the week. <strong>FINAL CHECK:</strong> the days after a round's last Sunday check are checked when the round ends; teams that miss it start the next round on the bounty board for its first 7 days. <strong>NEW TARGETS:</strong> when your target team is fully eliminated (by you or anyone else), you inherit their target, the team they were hunting, for the rest of the round. Your new target shows up in My Account once the coordinators update it. If your target team is fully eliminated by someone else during a week, you are excused from that week's check.</p></li>
+<li><p><span class="chip t-start">New</span><strong>No playing between 10:00 PM and 6:00 AM.</strong> Eliminations during these hours do not count.</p></li>
+<li><p><span class="chip t-start">New</span>No ski masks, face coverings, or full camouflage while playing. Hunters must be easy to recognize as students playing a game.</p></li>
+<li><p><span class="chip t-start">New</span><strong>Water only.</strong> Water guns may not be filled with anything else (no ice, paint, dye, soap, or other liquids). Never spray a non-player, a driver, or a moving vehicle.</p></li>
+<li><p><span class="chip t-start">New</span>No chasing or following anyone in a car, blocking roads or driveways, or speeding to reach a target. <strong>Any unsafe driving will result in immediate ejection from the game with no refund.</strong></p></li>
+<li><p><span class="chip t-start">New</span>Use the word "eliminate," not "kill" or "shoot," in posts, DMs, and group chats. Never post or send anything that could be read as a real threat.</p></li>
+<li><p><span class="chip t-start">New</span>By playing, you agree that elimination videos you appear in may be sent to and reviewed by the coordinators, and may be posted on @cch.seniorassassin27. Do not film or post bystanders or the inside of anyone's home. You may ask the coordinators to take down any video you appear in.</p></li>
+<li><p><span class="chip t-start">New</span>Coordinators may remove any player for unsafe or illegal behavior. Coordinators may update these rules during the game; changes will be announced on @cch.seniorassassin27.</p></li>
+  </ol>
+  </div>
+</section>
+</main>
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+const DATA={"updated":"2026-11-20","teams":[{"id":1,"p":["Alexa Kimball","Addison Feder"],"out":[false,false],"k":0},{"id":2,"p":["Peyton Jae Taylor","Sloane Chanel Witham"],"out":[false,false],"k":0},{"id":3,"p":["James Flaxbeard","Noah Kasperbauer"],"out":[false,false],"k":0},{"id":4,"p":["Maggie Chang","Abigail Katz"],"out":[false,false],"k":0},{"id":5,"p":["Thane Varble","Christopher Santos Tafur"],"out":[false,false],"k":0},{"id":6,"p":["Alexis Benson","Ariana Camero Alca"],"out":[false,false],"k":0},{"id":7,"p":["Maya Patel","Allison Woodrow"],"out":[false,false],"k":0},{"id":8,"p":["Camille Richards","Catherine Richards"],"out":[false,false],"k":0},{"id":9,"p":["Cooper Pesta","Ryan Dattilo"],"out":[false,false],"k":0},{"id":10,"p":["Sophia Kreinbrink","Kylee Hu"],"out":[false,false],"k":0},{"id":11,"p":["Meredith Johnson","Greta Hazen"],"out":[false,false],"k":0},{"id":12,"p":["Elliott Szczytowski","Hana Gragus"],"out":[false,false],"k":0},{"id":13,"p":["Mason Miller","Drake Bowser"],"out":[false,false],"k":0},{"id":14,"p":["Grace Lorri Termath","Leah Howell"],"out":[false,false],"k":0},{"id":15,"p":["Leo Bills","Enujin Enkhbold"],"out":[false,false],"k":0},{"id":16,"p":["Katie Borchert","Andi Voss"],"out":[false,false],"k":0},{"id":17,"p":["Olivia Fleming","Alia Estares"],"out":[false,false],"k":0},{"id":18,"p":["Ian Wall","Spencer Ogden"],"out":[false,false],"k":0},{"id":19,"p":["Brody Rasmussen","Cooper Kelly"],"out":[false,false],"k":0},{"id":20,"p":["Madelyn F Clay","Caroline R Tobin"],"out":[false,false],"k":0},{"id":21,"p":["Baylee Marshall","Hadley Thompson"],"out":[false,false],"k":0},{"id":22,"p":["Megan Nguyen","Alicia Dumbuya"],"out":[false,false],"k":0},{"id":23,"p":["Lyla Jacobs","Kylie Gilson"],"out":[false,false],"k":0},{"id":24,"p":["Irene Kim","Yunah Kim"],"out":[false,false],"k":0},{"id":25,"p":["Elise Dougherty","Grace Kim"],"out":[false,false],"k":0},{"id":26,"p":["Sadie Grodinsky","Mia Vanino"],"out":[false,false],"k":0},{"id":27,"p":["Henry Newlin","Ethan Schroeder"],"out":[false,false],"k":0},{"id":28,"p":["Tye Bader","Lucas Sutherland-Frank"],"out":[false,false],"k":0},{"id":29,"p":["Caroline Davis","Jalynn Murphy"],"out":[false,false],"k":0},{"id":30,"p":["Zoe Wills-Keely","Tali Klein"],"out":[false,false],"k":0},{"id":31,"p":["Haley Krom","Lola Cowser"],"out":[false,false],"k":0},{"id":32,"p":["Weston Mastera","Runcheng Li"],"out":[false,false],"k":0},{"id":33,"p":["Declan Donahue","Tucker Zicht"],"out":[false,false],"k":0},{"id":34,"p":["Clara Linville","Avery Becker"],"out":[false,false],"k":0},{"id":35,"p":["Nolan Hurley","Adrian Tyukov"],"out":[false,false],"k":0},{"id":36,"p":["Kathryn Shineman","Morgan Torrez"],"out":[false,false],"k":0},{"id":37,"p":["Celia Diaz","Rowynn Vaske"],"out":[false,false],"k":0},{"id":38,"p":["Padraig Meyer","Katie Castillo Ventura"],"out":[false,false],"k":0},{"id":39,"p":["Lola Bills","Kira Coggins"],"out":[false,false],"k":0},{"id":40,"p":["Aliza Pluss","Elouise Barrett"],"out":[false,false],"k":0},{"id":41,"p":["Colby Stein","Chase Emerson"],"out":[false,false],"k":0},{"id":42,"p":["Ryan Mahoney","Baschen Ingvoldstad"],"out":[false,false],"k":0},{"id":43,"p":["Serena Honeyfield","Zoe Paulson"],"out":[false,false],"k":0},{"id":44,"p":["Kinley Sampson","Cassidy Shephard"],"out":[false,false],"k":0},{"id":45,"p":["Dimitri Belegratis","Tucker Rissmiller"],"out":[false,false],"k":0},{"id":46,"p":["Khloe Shi","Elizabeth Hruska"],"out":[false,false],"k":0},{"id":47,"p":["Bennett Nofziger","Beau Vogel"],"out":[false,false],"k":0},{"id":48,"p":["Jasper Schwartz","Brenden Scully"],"out":[false,false],"k":0},{"id":49,"p":["Myah Schnitker","Lexi Jacobs"],"out":[false,false],"k":0},{"id":50,"p":["Marley Allen","Makayla Profera"],"out":[false,false],"k":0},{"id":51,"p":["Olivia Allen","Ninna Lombardi"],"out":[false,false],"k":0},{"id":52,"p":["Chase Wong","Joao Davi"],"out":[false,false],"k":0},{"id":53,"p":["Jayden Wong","Barock Thewedros"],"out":[false,false],"k":0},{"id":54,"p":["Saket Ajamere","Khaled Khadra"],"out":[false,false],"k":0},{"id":55,"p":["Eric Chen","Grant Steele"],"out":[false,false],"k":0},{"id":56,"p":["Chloe Novak","Rachel Ebbeler"],"out":[false,false],"k":0},{"id":57,"p":["Sophia Chamblin-Lonergan","Lylah Forsythe"],"out":[false,false],"k":0},{"id":58,"p":["Ashley Jordan","Olivia Lyons"],"out":[false,false],"k":0},{"id":59,"p":["Emma Brown","Morgan Jones"],"out":[false,false],"k":0},{"id":60,"p":["Spencer Hutchins","Isaac Masoni"],"out":[false,false],"k":0},{"id":61,"p":["Bahnya Kim","Aanya Shah"],"out":[false,false],"k":0},{"id":62,"p":["Sadie Huston","Kalyan Baker"],"out":[false,false],"k":0},{"id":63,"p":["Hazel Macht","Charlotte Ross"],"out":[false,false],"k":0},{"id":64,"p":["Norah Doot","Kelsie Wiles"],"out":[false,false],"k":0},{"id":65,"p":["Jacelyn Whitney","Siena Beabout"],"out":[false,false],"k":0},{"id":66,"p":["Laurel Brunschwig","Avery Eggers"],"out":[false,false],"k":0},{"id":67,"p":["Asher Lotspeich","Mateo Gibson"],"out":[false,false],"k":0},{"id":68,"p":["Matthew Franklin","Ari Gelfand"],"out":[false,false],"k":0},{"id":69,"p":["Isla Hidalgo","Avery Douillard"],"out":[false,false],"k":0},{"id":70,"p":["Elena Sepesi","Alex Berkley"],"out":[false,false],"k":0},{"id":71,"p":["Sam Migliaccio","Christian Urbonas"],"out":[false,false],"k":0},{"id":72,"p":["Beckett Smith","Zak Anderson"],"out":[false,false],"k":0},{"id":73,"p":["Katherine Bohrer","June Mitarotonda"],"out":[false,false],"k":0},{"id":74,"p":["Kelsey Plascencia Rodriguez","Zariah Castillo"],"out":[false,false],"k":0},{"id":75,"p":["Lauren Kaiser","Kendall Baxter"],"out":[false,false],"k":0},{"id":76,"p":["Michaela Rust","Caroline Gorden"],"out":[false,false],"k":0},{"id":77,"p":["Mason Petitmermet","Nicholas Roseman"],"out":[false,false],"k":0},{"id":78,"p":["Harper Scholl","Mason Harsh"],"out":[false,false],"k":0},{"id":79,"p":["William Karp","Joseph Keenan"],"out":[false,false],"k":0},{"id":80,"p":["Emma Medlock","Annika Byyny"],"out":[false,false],"k":0},{"id":81,"p":["Lily Brown","Garrett Berkey"],"out":[false,false],"k":0},{"id":82,"p":["Aidan Washer","Vin Djikas"],"out":[false,false],"k":0},{"id":83,"p":["Simon Knopinski","Anslei Knopinski"],"out":[false,false],"k":0},{"id":84,"p":["Karla Ariel Sandoval","Emmanuel Cruz"],"out":[false,false],"k":0},{"id":85,"p":["Talulah Stapen","Luca Massidda"],"out":[false,false],"k":0},{"id":86,"p":["Adhiraj Ahuja","Vasudev Thaliyil"],"out":[false,false],"k":0},{"id":87,"p":["Teagan Hodne","Violet Peterlin"],"out":[false,false],"k":0},{"id":88,"p":["Perry Halford","Tristan Phillips"],"out":[false,false],"k":0},{"id":89,"p":["Cyprus Jimenez","Mei Carved"],"out":[false,false],"k":0},{"id":90,"p":["Isabella Messersmith","Lennon Hood"],"out":[false,false],"k":0},{"id":91,"p":["Connor Higbie","Brody Gitin"],"out":[false,false],"k":0},{"id":92,"p":["Piper Rubenstein","Rielle Holzkamp"],"out":[false,false],"k":0},{"id":93,"p":["Andrew Renteria","Shane Hayes"],"out":[false,false],"k":0},{"id":94,"p":["Aedan Brandreth","Leonid Tovbis"],"out":[false,false],"k":0},{"id":95,"p":["Connor Cotton","Brody Gilbert"],"out":[false,false],"k":0},{"id":96,"p":["Kate Schmela","Lillie Gammill"],"out":[false,false],"k":0},{"id":97,"p":["Christopher Caid","Wyatt Riegler"],"out":[false,false],"k":0},{"id":98,"p":["Anya Spaulding","Samantha Singer"],"out":[false,false],"k":0},{"id":99,"p":["Brooke Krier","Charlotte Adler"],"out":[false,false],"k":0},{"id":100,"p":["Anton Isaacs","Jack Ransom Thompson"],"out":[false,false],"k":0},{"id":101,"p":["Ava Champeau","Kara Hubbard"],"out":[false,false],"k":0},{"id":102,"p":["Wyatt Carpender","Emerson Greenland"],"out":[false,false],"k":0},{"id":103,"p":["Robert Schwall","Thomas Smith"],"out":[false,false],"k":0},{"id":104,"p":["Taylor Fukayama","Sydney Fernstrom"],"out":[false,false],"k":0},{"id":105,"p":["Benjamin Bronson","Ilias Kallergis"],"out":[false,false],"k":0},{"id":106,"p":["Benjamin Ruehmann","Gavin Price"],"out":[false,false],"k":0},{"id":107,"p":["Charlotte Lewis","Jennifer Jacobs"],"out":[false,false],"k":0},{"id":108,"p":["Chloe Savela","Dylan Milo"],"out":[false,false],"k":0},{"id":109,"p":["Grant Kelso Gilman","Hudson Hayworth"],"out":[false,false],"k":0},{"id":110,"p":["Finley Katz","Annabelle Rudden"],"out":[false,false],"k":0},{"id":111,"p":["Eli Fliegelman","Kevin Schwartz"],"out":[false,false],"k":0},{"id":112,"p":["Brozek Bulatovic","Tate Dertinger"],"out":[false,false],"k":0},{"id":113,"p":["Hridhaan Patil","Shlok Raskar"],"out":[false,false],"k":0},{"id":114,"p":["Chase Hall Kubat","Gage Chavez"],"out":[false,false],"k":0},{"id":115,"p":["Finley Padden","Cameron Strauser"],"out":[false,false],"k":0},{"id":116,"p":["Bellina Huang","Cece Bonato"],"out":[false,false],"k":0},{"id":117,"p":["Kyra Gralla","Riley Braun"],"out":[false,false],"k":0},{"id":118,"p":["Cadence Newman","Preslee Kiner"],"out":[false,false],"k":0},{"id":119,"p":["Jason Smaling","Colfax Hamilton"],"out":[false,false],"k":0},{"id":120,"p":["Elise Wilcox","Tessa Csajaghy"],"out":[false,false],"k":0},{"id":121,"p":["Misha Rai","Shreya Solaskar"],"out":[false,false],"k":0},{"id":122,"p":["Phoenix Garcia","Atila Salimi"],"out":[false,false],"k":0},{"id":123,"p":["Carter Stewart","Evan Weinfeld"],"out":[false,false],"k":0},{"id":124,"p":["Lauren Morrissey","Wesley Reid"],"out":[false,false],"k":0},{"id":125,"p":["Bianca Bird","Jack Horsfield"],"out":[false,false],"k":0},{"id":126,"p":["Emmerson Berg","Oriana Kline"],"out":[false,false],"k":0},{"id":127,"p":["Mia Lawhon","Stella Munro"],"out":[false,false],"k":0},{"id":128,"p":["Sophie Grace Schmiedel","Tal Milan Zucker"],"out":[false,false],"k":0},{"id":129,"p":["Lauren Laskowski"],"out":[false],"k":0},{"id":130,"p":["Olivia Hart","Riley Harfman"],"out":[false,false],"k":0},{"id":131,"p":["Valentina Guerrero"],"out":[false],"k":0},{"id":132,"p":["Divya Kamsani","Anshrutha Sathish"],"out":[false,false],"k":0},{"id":133,"p":["Maria Marotto","Reese Hurley"],"out":[false,false],"k":0},{"id":134,"p":["Delaney Hall","Amita Forman"],"out":[false,false],"k":0},{"id":135,"p":["Sophia Hady","Ava Dryhurst"],"out":[false,false],"k":0},{"id":136,"p":["Cayla Berger","Sanika Kanitkar"],"out":[false,false],"k":0},{"id":137,"p":["Alexandra Khatsernov","Samantha Kritzik"],"out":[false,false],"k":0},{"id":138,"p":["Lola Spath","Stephana Simpson"],"out":[false,false],"k":0},{"id":139,"p":["Jacob Keenan","Alex Messina"],"out":[false,false],"k":0},{"id":140,"p":["Phillip Vetter","Trevor Wilson"],"out":[false,false],"k":0},{"id":141,"p":["Liam Cook","Wesley Ambler"],"out":[false,false],"k":0},{"id":142,"p":["Om Khurana","Adam Mane"],"out":[false,false],"k":0},{"id":143,"p":["Alexander Luong","Vivaan Lal"],"out":[false,false],"k":0},{"id":144,"p":["Tallis Pilkington","Caleb Kern"],"out":[false,false],"k":0},{"id":145,"p":["Kellen Lopez","Henry Kyle Esmas"],"out":[false,false],"k":0},{"id":146,"p":["Emily Anderson","Shelby Reiter"],"out":[false,false],"k":0},{"id":147,"p":["Devan Shah","Jack T Thompson"],"out":[false,false],"k":0},{"id":148,"p":["Sarah Mathy","Alyssa Elser"],"out":[false,false],"k":0},{"id":149,"p":["Luke McDonnell","Hazel McDonnell"],"out":[false,false],"k":0},{"id":150,"p":["Michael Wehrle","Davis Hughes"],"out":[false,false],"k":0},{"id":151,"p":["Amari B. Slater","Grant D. Schiller"],"out":[false,false],"k":0},{"id":152,"p":["Luke Carlson","Jackson Cheley"],"out":[false,false],"k":0},{"id":153,"p":["Eric Jackson","Reed Keogh"],"out":[false,false],"k":0},{"id":154,"p":["Alice Kleinsteuber","Asher Blumberg"],"out":[false,false],"k":0},{"id":155,"p":["Rohith Thomas","Vikram Raju"],"out":[false,false],"k":0},{"id":156,"p":["Kate Ford","Jessica Bulgantimir"],"out":[false,false],"k":0},{"id":157,"p":["Katie Johnson","Anisten Biley"],"out":[false,false],"k":0},{"id":158,"p":["Mia Lenamond"],"out":[false],"k":0},{"id":159,"p":["Taz Carlson","Brady Uhlig"],"out":[false,false],"k":0},{"id":160,"p":["Vivin Goyal Undrajavarapu","Raina Rajesh"],"out":[false,false],"k":0},{"id":161,"p":["David Katcher","Andrew Carley"],"out":[false,false],"k":0},{"id":163,"p":["Kenzie Sisler","Harlynn Lover"],"out":[false,false],"k":0},{"id":164,"p":["Olivia Gien","Elle Joslyn"],"out":[false,false],"k":0},{"id":165,"p":["Sal Caputto","Ben Knutson"],"out":[false,false],"k":0},{"id":166,"p":["Ben Egan-Gibney","Asher Kosloff"],"out":[false,false],"k":0},{"id":167,"p":["Wyatt Branish","Sean Kilkenny"],"out":[false,false],"k":0},{"id":168,"p":["Cooper Campbell","Liam Richardson"],"out":[false,false],"k":0},{"id":169,"p":["Kristijonas Adomaitis","Lucas Macintosh"],"out":[false,false],"k":0},{"id":170,"p":["Dylan Felchle","Reeve Thomas"],"out":[false,false],"k":0},{"id":171,"p":["Levin Vang","Lily Ballard"],"out":[false,false],"k":0},{"id":172,"p":["Dante Devitre","Kailer Trebelhorn"],"out":[false,false],"k":0},{"id":174,"p":["Samuel Brown","Eamon Holohan"],"out":[false,false],"k":0},{"id":175,"p":["Gavin Goldstein","Cade Palmateer"],"out":[false,false],"k":0},{"id":176,"p":["Evie Voss","Jack Bruff"],"out":[false,false],"k":0},{"id":177,"p":["Fiona Stevenson"],"out":[false],"k":0},{"id":178,"p":["Julia Senter","Chloe Gills"],"out":[false,false],"k":0},{"id":179,"p":["Nikolaos Maniatis","John Snow"],"out":[false,false],"k":0},{"id":180,"p":["Taylor Anderson","Aviva Davis"],"out":[false,false],"k":0},{"id":181,"p":["Kira Pratt","Sadie Homlish"],"out":[false,false],"k":0},{"id":182,"p":["Olivia Huh","Inga Sloss"],"out":[false,false],"k":0},{"id":183,"p":["Matthew Neptune"],"out":[false],"k":0},{"id":184,"p":["Dina Yoseph"],"out":[false],"k":0},{"id":185,"p":["Oscar Sonnenshein","Aidan Block"],"out":[false,false],"k":0},{"id":186,"p":["Valerie Butcher","Noah Meier"],"out":[false,false],"k":0},{"id":187,"p":["John Vanderveen","Brandon Matchem II"],"out":[false,false],"k":0},{"id":188,"p":["Milly May Howard","Madison Belle Burger"],"out":[false,false],"k":0},{"id":189,"p":["Dylan Demas","Nikolas Kallergis"],"out":[false,false],"k":0},{"id":190,"p":["Juan Camilo Navarrete","Angel Ramirez"],"out":[false,false],"k":0},{"id":191,"p":["Liam Chang","Paul Orban Jr"],"out":[false,false],"k":0},{"id":192,"p":["Arslan Burcl","Lyon Jewell Ben-ari"],"out":[false,false],"k":0},{"id":193,"p":["Juliet Philipp","Emily Lambert"],"out":[false,false],"k":0},{"id":194,"p":["Chase Pittman","Princeton Petway"],"out":[false,false],"k":0},{"id":195,"p":["Erin McGee"],"out":[false],"k":0},{"id":196,"p":["Noah Hellyer","Isacc Lim"],"out":[false,false],"k":0},{"id":197,"p":["Sophia Wiedt","Claire French"],"out":[false,false],"k":0},{"id":198,"p":["Nam Wang","Sofia Zhivotov"],"out":[false,false],"k":0},{"id":199,"p":["Anirudh Maheshkumar","Samuel Schneider"],"out":[false,false],"k":0},{"id":200,"p":["Caden Lauber","Hudson Wells"],"out":[false,false],"k":0},{"id":201,"p":["Claire McDonnell","Annika Hartman"],"out":[false,false],"k":0},{"id":202,"p":["Graham Rich","Madan Stack"],"out":[false,false],"k":0},{"id":203,"p":["Tianyi Zhang","Hannah Dempsey"],"out":[false,false],"k":0},{"id":204,"p":["Kayden Dooly-Schmidt","Aniyah Bier"],"out":[false,false],"k":0},{"id":205,"p":["Maxwell Mastera"],"out":[false],"k":0},{"id":206,"p":["Jolon Quintana"],"out":[false],"k":0},{"id":207,"p":["Stuti Yadatore","Ella Vojtechovsky"],"out":[false,false],"k":0},{"id":208,"p":["William Garrett","Oliver Parks"],"out":[false,false],"k":0},{"id":209,"p":["Agastya Prabhu","Rishabh Sodani"],"out":[false,false],"k":0},{"id":210,"p":["Isaac Hammell","Austin Gorrell"],"out":[false,false],"k":0},{"id":211,"p":["Steven Esmas","Jack Rossow"],"out":[false,false],"k":0},{"id":212,"p":["William Avery"],"out":[false],"k":0},{"id":213,"p":["Nick Pisciotta","Arjan Ahluwalia"],"out":[false,false],"k":0},{"id":214,"p":["Jacob Matveia","Estelle Jordan"],"out":[false,false],"k":0},{"id":215,"p":["Pranav Narayanan","Harrison Kleman"],"out":[false,false],"k":0},{"id":216,"p":["Grant Van Wyk","Maddox Nourse"],"out":[false,false],"k":0},{"id":217,"p":["Lincoln Landry","Liam Madden"],"out":[false,false],"k":0},{"id":218,"p":["Grayson Schiff","Regan Talaga"],"out":[false,false],"k":0},{"id":219,"p":["Renee Velasquez","Lana Darwish"],"out":[false,false],"k":0},{"id":220,"p":["Nikola Jakuba","Yessica Casados"],"out":[false,false],"k":0},{"id":221,"p":["Ahmad Tellisi","Andy Munkjargal"],"out":[false,false],"k":0},{"id":222,"p":["Wade Cutter","Tyler Reeves"],"out":[false,false],"k":0}],"feed":[],"bounty":[],"updates":[{"d":"2026-11-20","t":"NEW TARGETS. Every team's Round 1 target has been re-drawn at random, so any target you saw before today no longer counts. Log in under My Account with your team access code (XXXX-XXXX) from the coordinators to see your new target. Name and Instagram login has been turned off."},{"d":"2026-11-20","t":"ROUND 1 IS LIVE. Play opens at 6:00 AM today, Friday Nov 20 (no eliminations 10 PM to 6 AM). Log in under My Account to see your target. Floaties protect you every day this week; the first No Floaty Day is Saturday Nov 28. Thanksgiving Break runs Nov 25 to Nov 30. First bounty board check: Sunday Nov 29 at 11:59 PM. Round 1 ends Thursday Dec 10. Send elimination videos with your target's name to @cch.seniorassassin27. Good luck."}],"vault":{"salt":"dc25478f1b7754a4","iter":20000,"e":{"b45765c73e7c526ef244":"590435d3bb83c821bfca613ae4096c8a77540824dd5aa056abecb584593d297c61660a8eaad5964450f504e641b92003c2822aacf18be062997c9cf1472a38f8","aa25d2d0cff7d7db81c7":"93b088c61d2aa1d6ed754b618ec58832c90b1e6e1e790bf09ae5b4f1191cadb1de9a9aa983a2f624048b661a4c8f8e7da612cd8e2af1052bd3d247286bfd35d2","05917e032370f3d92201":"b11ca687c692a6fe7a708f080a1a68e5351a9d59872ac3a8699ef799ca4670cc4da7ae099e4e32ee2b02d3a96a27f5e112a87656d0143b930164b12ece169a50","c1cac61364a72632e517":"90b8a4828dd234cfccd81d92c992ff7cc63e51db19cf5952fa25c0596257d7c2b6a819982e006e2c1646e8320e09fa3c9259f11b5664d40f3b81416bb1dd0d37","0ccf473742f743376a36":"76d450d51146cb53ea29be19d11032cd46b4cdc437ae72e1fdc21a4e300518ffeb7ae76d8afcb86fcb108b8026cb5c7b92265d8fdb59564fe80a8bf7971193c3","0314776511d9816206f2":"1321940cb1bd5707baed48272542b1596c3d3acae4e4143564f3bf9e220ed418f64ba972c3f6792354b103160e07482bc0a49df46e6911b48ef743eff11aa5dd","accf221c5d8575aaf54d":"7c1d1052170dec2e968343c3ecb4cc6b9d2aeb5fe339e9f839ed4477eb53b6c37c0d8c0256e5132602bb55986fbac348f1522e416734f4e627c62aad77194f6c","40e9c92e62fcbd7f0f64":"434b412d2a9788ffee72aab8533b964656696c995d24699d93bf13db1513c7f58e7c8a952361819e28ee58150a9af4ea4146b37d846056d3e726c65c48962d44","5ca64ec16f0180ce7138":"40ba78b424e298b34fb7c15db3bc1f8f00fb54488e6f1f16d83eee14dba816ad6e08b47175941b63598817583ac6c022c684527f18dbea308dc32db5e1151151","92ef57dd0dda12cfa5af":"e8765f1182271eb79c49f99365c765167117a9dbbe244e3b97a459db79b2789e62bae5053d1bc4a76c7b428ce7554492500a0aecd92b6c17d2438cc221d7b057","dd200b6651a86676fac0":"8023069546740de06755395eee84b95434e55aab9490d7e6316b16c77ca2706d4adc97fc1201107db5818797bbf6e09b294a53453c0eadd0cef2ab8473052da5","e41f0ce430642fbf6536":"3d175811b6548b45c3fb551fc8bae9a76f19c0229ece08b8a86bbe82dee54fac70edd2a9d520685eb08b7262f33ebb2b5be6a86d84dcd08bebec4370fc2f4f69","fbed515e39cf63d635fd":"6e98e6fae3ae5cb3f085daec012e16d022767eec2718a29b5c88326c00491a443c66541d67356c916fb5f80bf57abcd02644a5f3eaec27f413c681dfeceedcb3","687b1a33ed9efebaa5b4":"add2518972026d92508ea9004cc47b37949c4a108fae20afb52d46f64e3f024a53f8d24ca9287063d8194d90028dc844b434b3c8a7e8606b8b9834ff4b2ab55a","a631be5041769fedff37":"dc10c8be083d1448d74b492ef3a69ac7fd5bea2b2aaffc4655d66b74028950714482f4f5ad05eaa859305fafab6920f4b52598119bc53e91570bb6b1c39dfef0","96bad623ce27a8e7f94a":"d674cf77e15a86f7189c1aeb5c6ffb2c8bafc50e853680f3c6ab087beec304da2e2dac118ac5715aa19c0013576a9a71c12bec1cf77ff68b48c188b9c499e8f0","db7be2bdbbf41528298d":"3fe0b0bd2992f002cb5b4d5d5cf0b7e251a5de31667fcb635e2b8b5b8d3af35df44a614b47855f72faf7e4b0799497e325220059daaecdcf66b91f6f3826d344","280631a24471f36317b4":"20f3a71bcc6d83481cea629bd3a87fc4d2f7f3e047c309c62ae4035cf05cf84df094444a0794b53c874d90c92a7cb9e578da34bcca370e03ae32084fc9f7a343","b9c60f5d9a051576cd9c":"9de6658b5bb97adf1799af5b946260dd9736b28a8eb7214e8f83d80a4c45efece0de6ecc58393d5c781fae610850174bbb582eedb0f0ae620d8111de33407093","d3d312ae705cb58d6e9f":"8ccdcfbb74e62c019b9613cdb5445997405de96ab66d792b17e0902ef44bd4dfab6951445f80c2481cd65c421a110d2b9c7008ad8b825442fbd62c45dc5c7cb9","53680c210dca33fb5a05":"ab87365e2bd6617fc2ef081120279ca446e4aa11c6803c00e259fc1e4669233c3579dd6e280c17eb49592cd95b7c94bf9947cd693bc5d847c69d2e46ecac4f4d","fd059fd5fe8e6a75e9ea":"2a3e2cef4ca35a08136a2daeb6ffadb5c5b47e465399d43e10f65cff62b772888bf399ce391fa90e20380d39873a6c973f0366cfd2bc1f194e237413dc46f208","8d62fae1e29277019d2e":"be7387f8accc4ff73b42d8c3ec65c2286ea8e3a038a9230cfdbcff68fa325a90fbc0cd264b69f756aeabac8934d893c384aa78e2ae036371b3f62a99858c8f70","a5570b1295b7da436f70":"02a13069fd0a5beb1323472c95c54e1da156b632a6cd6c10a60fac2f2490540cf2af51e4945551a195fac923308db7eea844b53a81cc710fe745658b809a1578","0f3051a0f3a0f9054547":"85170b471337edc55704f58ae177f76f9d17ba7d09491cfd3d175c2d20b9d0f430a28f68294fa5ce26a98c297c2294960b74f2975751446f512ced59ff86139a","f0fb10a8d117a2768a42":"c363ead7bd61e07965901deb7c94a3e3c69638dd5d85e0217caa73711ce995746d3e298599c13b18344e693b187d97187526c099ad4e2db52c5ce1a3e926ed28","aa2b4a3dc0985a2c2ca0":"eb2df87c76fcafbb4305beda239f3cd7eaaaf723aaa51c4360ffee91eba400197c0e11140fa476ea4e92c7bcc56ba2c1f54558e1848ff337063b3cdb30f1a991","281492f834809fb0098c":"8743a398db05e715e8e0a6899d06d7fc6b37592cf6b170efdfaf0a39d76d5de61b8057caee757466370e6e3b2c26078814b2c1e7ada98c65b191a27e7a83e05b","fe916d068497a59763a4":"da755b9c13f52ecac1c774a0e92535c4fa055fed79f12750332b90d796720344c7fa25d84cfb01f1abce005af5fce1f3e534eba79f2aa0e6686b19afcd1b9e1c","2f691d9d1fbcec70510f":"f24331248acaa93414b996acbf0b33f3825ca03836fe282315ff6e091add6aee3e14a7c2bc39be3e55fa97bdc591bb5d3c232a305de44ffc94c391ef484f77b0","37a7b617f68c146b86f0":"11a904febb813adeae654b9b9ec0d59d545189aba03fdf7a931d43b87508173093855c4ac38fcdf7d2e8b83461c5207b219370e574efd870d666ce5e8615fcb5","737e56f20a65be3367ff":"a7cea7e1f67624ea947e3189b75bfe2831d2be9bd49efdbe7706875506428e886eb7c5b43a1d4cc778ff01839561cbb5b292b2bd9ab7a4fa4749cb3553983eba","baf3e9db994056cd3491":"205b485b01dbc24f1d5fc651bbe5991699c53eeddabfa5c370a35a4c406b5bfbe1e2f58bf11b127be59b06d0890852330c009ed5b7a4274d3e4b677938b7c9e9","1c5ec29574926aa679e9":"bada458b70dd2eab0a4aa22b09449c2426ef140f295c9bcc1ca729ac07a5871336022734dcdc39f95686698fb2ebdff68931e36a2ffadb964b427f40f382609a","8409819cb244b0e65fcb":"5f39956cdc72932d4d1dbe5a6f1f216889b3a7070d886c0d6fba8734ca37ea9132d37269f624904885733991f20c9e52458ae4a747240a3c836e16c355ae36c9","9da45d1189faf74c9ab1":"31b4e7f744ac95192be557684e4a7a20ec6e2dd834a5231d63ee19938fccab2f2599794514b84d02b2168bbff2496f5c273bce5fa496743e5c6f1d474fb96122","266c2de1647af0ea2a25":"002b9f091768a2bbc6fe0f4935ae6af1119241888f2796727aa07e159d8e7b385d7f3d0e1bd6e62399863dc2753df0c9753369869c6efb2d71bbdf24ac252f74","cfc2bbb831dcf063f8df":"249181711a2a11d666dd74dcad4e86ed964f741ccb2ad96a22c3f5e0241dbd06b5600b65b3eee7e3439515653fdc059cbd76f4872a6dc6910ccf6a9cf83f91e3","a095e95a70adeed0947d":"33b5755abec56206004dba747c0b79945488383184bdd75d727cbadc42f6f5d9aa9a878f860b4c568236dda458ef41277d9109bbaae3458befa8560e3a3b371d","adc10d7c7db6c9c8f100":"2a156ea71aa76f45aac6cd3c4ad8df0bfdfd7de26dde0815ad2456adc072d250104b497e1e0a388293d309fc7af9969950e76e29db5d596b4a4a913d1b5e0331","94ebda582dc973be93a0":"a63a321667dcba35d25686203c54c346a1a52984d39ab399a3cc643cc292f491ad40f04c2e7b4509a896ae71c8ffabe9bd12112a31356a57160c53d120952627","8946af7ceb5b9918ee71":"618c94778ff41aedd55dc80e624c3a024720b4796dbfbe84e71657a81a471c4f2da0de47f5c90f02ba082a430f23f2b3e766504a116beac10bc5a14807a940fa","ca546d7810501bc29cde":"67effe16877c6c2818147ac6565b156a8aed3698ad743cfcb48aa0837f938601ccc9f0ec13e353b795c7f8e403a485ab31e94dbde77ecb5f295e9dfae15b68f1","579cf00ec4273d7f8b6c":"a2ea78752f08ec0bda5d7f63677589a3e0b9c5021dc960126b7288b78e228e0d63ac2a401504b435969e67f6ae96ae0c9e130e12790da7f8e6d22f3f9deaec87","b8b2af57e85f2fb74f64":"87597ce408f6212131805b7a8f605fef66ed025bc772b91a7e8af2b556dba33e6106cb911affb4021e16a36f340a2c149aef0cd73664fa7db8e765d883da5add","1f61bb828a0edc4d58e5":"280742b04d28a2e448505e7c237a1bd14b25a033280031a0f698c7f31dfdaf4728c9c33c00b7aa19bc3acb21c60d4e563234875a5544f298b6c35e8e2f615178","5425b9b7642992d4c9ce":"511e716cdd9faa67040512bfdcdf45485cd8461ed550a92792dc906b6a6583f19c7f2b3c54f941a829b00b5fb0c62ea489f1427fb105e6cd9640d15a5cfd59ca","6693c5f1c9c323820769":"e068965a2e43fc965877e248f7f0c03f2f559452954f51a028af6ddceb874fb7050a79061101642ae2cbcf768495a181e2cdd44eb38cd6a8b377cba4efae8706","6ccb3938ec9dbfb75d9d":"aa09acb46b9442d9c938fe23b8027c778e369240d83da81ca086f3bbae562f42a93b225e0062ccd94f918e1e43e71ec60a720e2d2cd3879dda48e52355163f47","e350bb24d1370e4215d6":"9347eaa5ca4559ea99a42958ddaa6247e099e835cc652f4d0cb4e29dc0e11ef055e738990f16f0ee7ab5a4225c4c8e6cfc165fc09056e04012fad0fef71670c6","af0931edd7730689d38f":"de1217bb77fd1f622d11873fe0ef37c9429d23e0e55ac4a3b5b5c94b480f2b32d534dc86f882b00c01fa44d582fe770e880744097673b40f68c0cbb3d7a1d3be","91798b4665b420238aa9":"86f20d408f66bb1557c3d23a8428735656242a6f09667c346d281607b983f38b6909239ce8d2f5696345a3ef86b04cbe644928bf2791a634707d6f944896a8e9","a3988b925763565213c5":"d4d9fed8322faf6493ecb1d98c3b76680fb2a853569142d1b381a703ac57caaa8b09549ad528e3afe2149d00cafcd11d2dc92a4bbb2829f44e136065f290a245","2dd2077c43845dba02cf":"648eb12171cebe6448f124ed3067bfe817a5c3714e819eacde51679ddf7f8f3beb658093743bef93352ead47d8094a8daab0991b92d48eacfe496036a8619855","2aef183bcc8a403cd840":"8a10e96764e8fba843e117416fb2ce761cecdc7c0baf984d1dac9bf531d32f1227d7c81843b1c8b60e6987aa91c156e89c6bd1898f8479fb5047fb40ccace286","68c183415cf0d25934e7":"2f0d116e21e805dd617bcc563623310cf51cf58d4c2a5fea6cad027ef2a28fcb828beea987733d586bc4d5de61bbd86bd65074224b12a0622827ec3899440b8a","c5ba892a396e1b9ef9b2":"3ed29ce6566dd3efa8d6ebff258ce85939e4d7179e19b5b1c061bc573df3f1d75c1e0be5c48531e50cc1079524771187a8df0dcd36c70e03207d219795391441","b7bba1efa6d600184228":"2b47dbc3ddd3d91c18189d1f30dcaba0edc52eb65e0b37ba39a8b52ff0de59c46f99020566e0c2feb57314e36acc19f6b155dd1ff59acb5eaf6ac085141d2c21","c614e4ef5c98b2311883":"ade7ad41294cb7119f8292b47cc9d9728813d9d188c63a94aaeb5cf6574fc6374fd9b7c4a59cd7cc7e4027bf515f8bf83a3aed6c410f6092329685a02babd5d1","4d04d9c5e1b42bac7d96":"977d31503467e511c3d3d565b850d8ab8f0650844fa23faec8483f4ceb124c69e7206ea0fee5099797e694932ef3bdd43ad439da378e5a1bd29e877174124b44","73ca243ef9530676143e":"44b46b5646e3a4f12bf240f8149a6e578557731cf7ade6b2a0dd08e021718112b08887673c49bd97101b27b1480310afbee50d4c2877d661f7e579161f9561b7","de05dfabb12ccc1ee874":"cd8720619db75df2dbf0adcbd29c08801ae32bd931437227472b02e92674b894ea55278d372502d8c364f3c8639676b14d375151fdfe13480d70fe8e729d04ed","adddd824414fb629be71":"32c914e0573d986d55a0b1cfeca58ec4a759ac9f9f4c92882c7e4ee2bc8058c89941e728090ac4c9bb09f7658f08f17e245ff5c7326daab45c2dba538d69b1a2","b47e81259317184797ca":"0f672b8b9707a3afcf4172a05cfbf95ce76c1134d4f0d21f049ffce7a70454875ea40b3563983f295db62a25aa23271f7348a19cb48cd800a41e6284576a45d5","036953b82630c76fe27d":"9de11cca0af445a85fad262760f1bdc28dad2e14a9c805949a94b3b2f4cd042c3a3ed51b80e0f15184507fff6d272359db12e0fed4cd56c29a55b1b7af7da524","2016907b42dd6067a7d0":"68937f676a37ad162d7082196b9c7b58cb8b29115206d9ceb8ba8d1cdf6a870a6af5ede3a763e25c9045e2acb2dba9ae2dd5113e80f691bf6c8547e2327344b8","fc4e457e40548a0fd606":"d17a3073057388f5dd2b847ae8a24b737005fc73ee06059cb3755fdd5580fbf5b8659d86e99662e318d04f0bb7612faa712b73c26b904e018c36f4f8069a6cab","48257b8353df1fe1ecc2":"fd4f0e526e576e6f1e23d0b7d5b3f514fd70a860711717e61bd77f7123339968cca34b5d079bb7cc574cd4bda5b3933e0fdf09eefba181e8c2e8bc0df4a3c858","27f99f1d2b67ee60058a":"3d808811cdcdbc03141107c60be76821f6e497b6fb8f1c702885cd5a2ea5c66f180c5979885768e242e1bbab1e893d7b0038709a9cd1c1e1b65e101282e568bb","c08efe5d16d0fe91b676":"dcc335d9c7eb54dffbd16cf558cf7c3bf044f036435a6bc9e053611d97e7827c1e54df84e2dca07f42f2f15597e240c58bf325d59fafba54ac35281bd8d50950","0839a508e36a85ee77f0":"4fe8a63b486c919c60a1e49efa838372456be0582181f10b18444c1f2637252d394d80e74591aeb2b7ad6ad43a8dc2b8b308bccaea916e4c18ac5f1981853753","dcf75826267e38a4f657":"55583a929147add5f8fc062028c1bed774d3736d63c1286710afa243a8b006d1cc7d021d86c8a2620d51abb7688bdd02ff6422c6aba2b200979cbe775d9f8859","363489bf2a1a6fd3a119":"f4f8191e4c2acfa2237f8294c6c3bb4cbbaa5ecd02b969018f797c788de5d5911fc92b18b656b64d505786b011ba83f39dd96a419f5c8e0ec8b75972fc6400bd","6de6e8ae803ff7d430b6":"25533f3a0dc2ca445753929edf4a21799af3c394f6a83fca81a26e38d5389cec5a3ab9c7b6dd9da6dcf435b8514c189edb4128ea3c1a1eec25580fcbc78419de","729911fb8796661b5473":"be526ce580625fe4ff3ae587193e1bc7cd3fce3be23832e0b28af0cd0644f517a399ea7ab68b4d86c54386a4d9e4c05773248d7e5e963a16448d697fa942c71d","af7f7784aae3983c3b6a":"f66f314a3151297a933fcc3f8d3fdc480877e4e569717a75a5fa0083ca138fcbbc5e69b81a1d013fbe0a908e8c8cf4ff074ea97b5bbb942833811d28ae357680","c595803804206759053a":"860d0c78355ca9428b0b5777dfda0d42821d5f3b93e3817a3e5129eebc3b1ab56c62bbc738a0b34f1d25a4809ec987dc8d07cda12eb0f09a8363c5730dc1f69a","3d02c7ad369b654751c6":"4210b2593802023f01aec611f51763e90b0aaf7b4338eb5ebe4b7923a3e62ba78f39db2fb72fa74bf0cd50225fabbda12e2b2aa100e320aec67b298a8293a5cf","54db643ea0d89ad8cebc":"13d05890484d131a24e1496c7b3196c1f60bf411ba2529cc68aaf2a8470f36a292bf2f213d2376585beb8774fc8bb615a0cc5e8025ab31bacf8f091fb0ff5410","ffbf16bcac2ca593e54c":"5363473c4af5f0c26d8539da1796682df7ff06e3c141c55e7f807519f067fc2cc80c9b40fd9ac8b1ceb13ee11afd24816b49aa4649c8cf6c243837e73dce6759","5fcfb6d11bc67bde789b":"c7c8185783bfbc6632c1d747a5208401245049c49a508a754c0b506b032ed162f53bae5185b010ebf3f382b6bc338072129ac9e3d8290ba1b61b1735f856d937","a05f325c460048b8f0fb":"0269090a2102d810e9d1d174cfdabfd4eed8711aa871b7fc360a0f86aaf3eff12366f7cdf05c1a9418842e12dd8dca3b42adf994dcb95556a44a77f73e4ff9b5","0e0fcdb54ad449a5c5ed":"f9d74a5e9b760d9b28e305fa1a618bd50de0f815e52d5b893faeca38c929f451f969cbfcd498f21bee75f0447e97617814c8876b8672e088961fc9bcb19b0ed4","5e9bce0a4a3c4582cc67":"ece31527977b10e8fffe84a3d9711808535529a731ca2eaf4bbaeb2d36c7486fa3b113a94b0e981bb326fa363fa0826f6fe9f4c9eacb4d1d302b9f307cefb845","2bd6f93895b4828544ee":"2caecdfd67276b4610b0c04151decc5d33bf7d138d5799e1287053e8508cb13b94741cdfb1c4c2552667930b49de78d8c0ebb0779f22ec2035b11959056e7a6d","69861a721037715e9d82":"33d05401c0d226770eb17843104f25713d87c8ed9f348cf18d327db20ff7286961b88170f811299887991813866da01d298eb1f486b5d8da1d8136874a80c0d0","34ef41976b0da1ac88e1":"9158a1377944670edd6edcd8f00cf42e1cf2b9012d0bb6f5fabad2aac0ec1cdd872c6f16996dce9030df3b4e6116f3dcb60deecd74b3087e11b840e398aa4b20","c8713b43a353191882f0":"4e97e0823e582391b8b0c499064e48f3bcaa05ef06a6855143c172084f79e1c82141adfc0da1d6f3a3024ee137ea551841ddd79c8b38ad35be3b9348da7b11f7","06790695ba93e592f514":"b0f5dc1888f75a3b20f4d1d93937cf260c5add64cc72d23edab3016fc574bbb62768c25cef1fd9c5ab733aab4ce61f2c3025f8fbae0b5c6f612ba34c94c48856","fb5afbbbbb7f1f757494":"616c0ee9794dd2989cb367075f5102ff88b8b0d0e96db659201fbb6719f6b8a94c8e41c35f143769e0ddc051974a59eb9d3089081963061c8d3a580341742ba4","f51ccb66a93e669ceebb":"bf40bcf4e087d1d2e0ecc48f87e00cd5622158be43099d53f8accabf34168fc53c027685145099a0f1da91b5f2420f69bc020741f88c3257c59429aeaf74df75","895d677cdf0323932396":"3a560fae06fcff6bff2ed576edcaed53445a4c7680c8ca5910b1d4bd71f517314ca89eb7c5933d8aa399c640297278db11cc1aa32933abdf676d31388841e91d","d84144f09e3b47a67dbc":"8957d260ca61f35014527fe12b7897707487e9882e194600906032d3b528db1b86dd2ab60822fd15248acb166fd364341581cd15a08653c58258e9e1b3708739","90d6b05f5ea0026b1135":"f9a836ac56fd7259fb3f8b7b755bcad2dbfdc940f34d08c5374a2b4dea424bcfb7184aa107adbd11432b1a3ee4d45e903c374c19bd8903a8cc4422caf425d973","bec3711e1cfdbf8c3525":"2b726d6e72fd44f98a3550f5af38c38e3c9478c9595c13b4a098689def8ab2bfaf3f2db8c30aeaae8b77a9a6d95ff30eb7dd813761e080cf2fe2f1080ab9eeaf","53e4f1f763e0df1975e6":"df30fe84eb9f1874372e90761c0f9ca9b2fa0848d4b4c463a8935c3a818915bf451c9483f29978b23ac5dd6360bbf25d826379643beb198117b585340814075a","3493c761251453081823":"0844b14a97832f23c6821f3f8448d2a03e1c4c80cc361b97d13cd21d332442152f68c1509114090cae70e1df6483bf7de875232c91923f544ca27937500972a4","47dac16c489a01f7cc7e":"198bdbce4c01b4b27c38f7995037b28e0dd514a3d00f134db2cecd7a590f8926c869d206e5843dd8ffeac581f57f83b7fdb6caf0dbf808a5934cb1697e203a83","61421ab057a3522b84fe":"22aba3631d40fcf1ac649ede9c9c30298d4f30b5a075f12d02efdc94e66e877b4e7ce625a2e6aa54af340fa7affab942d17821ef53d759a218a45017ebfff399","fe2bd9bd525944308b08":"20c7e847fdac788a6229e4407423620ca3c2922726b65cdbaaf4583d278e7dba5749bc85c7e1fd377393cd9aa981b239a36fc81ed3c6c610c45edd6c8f2aca7c","a13716d40c7f4a147b57":"2069eb25de7a525201750585fa2ecb1cb8dee2ac7b633600c5c29b3c0a30e83de8c891bfcc5455d3211697c54c4aad0040086a32d5869758b74828f3ab09eec9","a23e0836db7bb81656ca":"37b345d40b0a8021d3140ca6a8b71d0a83ae61a812e45c3f025989ca25e84112d393f0c4b882b426225483cbe082e4b556902ec0a354aa91265d1c2cd0b72dc3","bbaff2107073ee64126f":"9e295946374649c15d394c60979f2346d825983e4796317933a9ac4263551bc93bc232d4ee223d8b00d1d39045eff136cfb73d81a22a47bdf3528667e698a6e6","6b24410e5e9e06f52c4e":"1c4ef3e0208fba9a08921ed5fb2a8e5fca58b76cc54928cfc837a12e472155ec622e2fc238d9511173d65bc9a91b74384c9ccae93fa65c6761c893f11013ccc9","73caf57c0fec31f98687":"0f3ad37ee1f724774f32136f20430b5043feebd820498c6ec5e52a8db5cfa8807712ed7dc88664f09f0fd3ce07cb707a8d5d5d6dad76257ca3157b380530b2d5","93b889d6aa479cbf6d41":"ee56ac438ba62344d2025b2bfa3c39f8a7c29dd9fae11b7439da2f350c463f31a02595918b775595b66c28931f7429bd2aad2f5f881f267c4f01ef1e30a3a21d","3613a94c382891a7aebd":"debee2b1f633e2eeced5e68adfcf1d3233fdd4bdd4bcdbca9dae225bc463628d6210abfd77f6e4a21fabbc1bec1cb63327fa59d8143c8d4cb99816327885f8ac","471eb2f02905c8855c95":"34e86161952e354cf17e097f8545ac72780cc14e283135a0f5736b00c0ab34ee785a8d2276654c7e672f7e451167a1b2099bb29839e0edd6a0589d01e5079ba4","f231a49fd0ef82e635fd":"97ab7ff2a4309102b5048a2c3a209e29d280576138387fdb3b9dbd451d68cda528dba2c65967800c9e1e38edc323c938c67933e1b148798c576a5d083efb1e40","203d926b377bbce23a0e":"374d5ca0ecc2cd65287b0d830424db00eb51d0ee17a78da8eb3a20e31b44697fcb398fdb9a32b9485f3c4a0b37344eade86fbfd2e0392c96ceb96199a81359cf","b4b8a18f5f2e69ae8b12":"7fe1008f4527518ad9406f569b674593eaa9ca58ffbf5cb3ee07dd09d6804a496c3ce70d71e4b4a311ac046ef28ab93cb43fb14ec3539d2c64e869e820a38a27","30863331ee2bf5335d5f":"a194e7ffabc837d954a840c416dc1354f87580e22df5fcabc70a42eeb1b0fe503714e77d03fabf7ce4ede179e5c7d53dd17f9738da442502611b8e1493ddbdfe","51d608731bae8e8a5ad8":"4311c26ebadd80ee16b7aa912c9994714a972535e64efc2d6afcf16d40973bdef97686b1d73033a6956bde81fe76b299344944de5362d583394f176996c94a5d","cfab4b5cad7b3405d043":"b967a4a4dde925d0c184448f19db389fd1ced74da796bd5c71cb81bb950a890d21a435d51e77be1eeb362b647982a860f4b3eded0b71e7901d88dc4bf472acff","ef2e42065b8da0e88f5b":"afb6c2f9a65fa57807eb1c1b91082d1809b7523fb70c94d81d4a697ef5ba2b1ea0b6fc6c5172ee3aff0d229d5fe496c88d6a13fb8f1c0b533210a29100f0da46","25bc3271658a1c304acd":"4633d22d612843f6c704bde5d8a2c3f4a41da7ac8254bcf2b4b619e61f04cd3fd17e8dea5be668b6ac813fc9e7c3f81042ff93805f4bbe7a483fa8013acf4e4d","94096b5cc4d6b1ea3bed":"874de63dd0ba9cf75fd6fa2efa1e1203c32cad5db2a5953cb790b7b96fe8054bcba8aa127f66b3923eb59dfc035635b036b3b0352156a637406010cb9f8011c3","1bad00ac71d116236d67":"5881181cd3a3d210dbb0065f53681f10ff1c22b64abca552d566117dab9bab455b684f4ce8827a93e6949929eafd21566388cd130f6ea223ae715b17408bb3b4","11d92ea7af98199bad78":"00c8731812b32a72a12567220ce5abbdce619fd1c7ef2f8c93b3d8c1780463bab7f5349208e9d8cab7e0c315530bc048dfd089761e63a898296086ef8fd37b86","eea6b130e3c8ece8a808":"588fa96348fae7a2daf2dc7f1fed4094995611bf9d9f1bbe34ed731951a78165f9b4db6ed8463637f59cbe328d16007a3e07243f5a1ed8a88c17af7236ecefa0","5d6b5f14ad35863efcbf":"d3747b4850dcadb9d60a21590a6366b37f547a47cbb55a2107a91dea8a70134941a11f27116dcf03b9d3becb1ae9db22d1a14673f6b1c55de001c5c36251f644","d68dfecb3ef3d3730400":"95d30e76ed7164ec1c9df70ce59b4fd34a9407d767870c0be40bad485f502f1d334d7fe7f9e4a3dd6e6ad24c6c73bc2d7c3499be8a18b55b22a123e690f23a37","41347ebc67a03e3a7d45":"e7de80c581d4e26a642185d37abc16b1818ca303ec9d45012c78a59b117f777356d33bf1f8df788c61f269edbbfe7195831bcff1c4d0cfe204a763777188c1da","9722b9e6705d925b1a1b":"8a88bca00b47f122165127811a2ab01f9554653e81820de07823fdef55a93d75584d17decd6f1526860e27650cb24fe1a09d6ebab83dcde6b59ab6dea01233d6","10f1d95378e926f13a38":"bcc36b89b8f7cee2cfb2f8242acc9e56ffce62d42bb4b79e8d5da8ea94606f6b9f1cd597d607c189ef9eb9f423bc684476c6a5bcdb5e3d20dbf13218e1d034a4","5f96675692381f507d96":"c886731628cbc6074066984b58dc0216918c27c0d15f6cfd530cda3595626be0694201119fcc6fcd980e1266a6c9d29ac332a2cd885cf7ecaa569da139064d07","09cc181f80d33fe0c38d":"c2644b15a9f7bc95784d88a31d53aa7ef53588023ca65b1b5cc19b7a19504b9e98f5ff154e688b0db97f1a206263ec41c4a3d848e207bc180fd4ccb7e63c7cda","34b203e788a3348c8e20":"eeda43771b9f5a54bb7dce88722009c2b656be1c64f7d939499a13591105475cb0519a03bcf23f89746e501340435818f0d15a6c2ac6f7f4f5572f966aa6c99d","aeafdc69e43c66fc175c":"0bce2e24e94ed5cb5275f003823982e0b3b23cf7b6f5127fd2037b85e0dff83885ce3ecf253442187da442aeb00db2bfccdb9d2a090759ece879a266ac83d7ca","7db1c5c8530ed41dee3d":"aa420ca743120b45132823cc9a9d815daf8c1fd3bc9cfb7da2e6975dcccffdb23a0c993d2c296835d44294a865442f3a3e0b501920f41333a00268082a048010","41e294e303ee9573ee34":"9afa515f2ca17e9684e0988dbecb1667e729da8a413f75e7b6d3a292d5941cd6851c45ec7e6091ac88e1de616802e2cd52224cd2385c3ebc7ffa5854547bd4d4","424d05208802e5c7fe66":"d33d323765ca830d622faa838f36c9cb874f90965966d5c43dadb47e7449c6e95954e569774c3c1ff5209569b1bea6b55d0355957e7ab79f8680d222632937d1","281f72ff947da2cd9090":"bd3f7edca6f77ab130d240eaf94003757da8023679ec6aef34d8d3ac6e23c630c8478e658a12ba3aef2b04e2f87d26c64f39a5edae1537a44c8356e0005b9c3e","2cfce2a06e630a57326a":"de3a58f8fcded875301a45e139d765d250f94c07cad69773d93c600e92133013cf59b03b356486f0925203dc6279f22494d0247ee7fac29a69bf05ff69b15954","f7e3afa82d80fbd75fd4":"41aae84aee424bb404d41cd1965381ea07d5ba9303178cde1bb98a8baebf8dbd6f533f567ff80e7101c5de0f89393cdc52dd9e8c25a84e64be087117145b3ee3","c305826f138c18161649":"91489ea19273d028cf0c5eaf1808edf8dc40cdd96ad9c31b03c0b34387c078c8d8845fe05ec99322229f34174655dc7e1094de749aca8106e181d645b7b5ae60","ba72227f1866d7cf5636":"0eadad2a859cc0805d06778cd1852c69375339c6412abc2e30e39978da88bf9c32b955945896334e7603c934049e71fb68fba287eb15626372f8ec8df0c3fa1a","08af415b6e4228c7b572":"77bbceb35fdd944a5285dc33cd82a7d31867a4cf03ecda4931cb0579dd9e8f20fd4b63a8ce3073c5541160043c48c477f0056700d23bed323d7c414225524529","d85286412bcf83a5c496":"2ecb885ccb884707008eae44c5f381db42289d1e11b3b02fb8942a5490803e48d79cd9281898e097f271cbec70cff71c881f1bb23c8453d971173e464c8c6f32","688f1e476d523200f7c9":"67aa30cff175450339ec5d4b8b2487ab1e3de91fbbaf89d4ef7c82ebeddbdf1df5edb6543b120bdab1bcffed03e9346b2d6cccd343c09830aaecbade00b722fa","afdc6af78a2bf6e50d2a":"ae5d3aa90181d5ee1b6c49b40cd407afd7782be871764180a014638df986e66c8715ffbe239cb7bc2c2aaf7db1bd894386bf2b3756adbd64d59178d770bab2d4","0016875e09b723481bcd":"2a6bc664bd48ebe7aacc4a4daaa976c960b6da3e535a97705840932c1ef85a02bb6b759afbae2eb9d5b7c3ebd03a94ee90445fb7f10b6662134637e05f4b8eed","150755d07525fb376ca9":"79058c6ce0346b7eaa9f7390dedaa0b60192114d050acd8de782295f83cd00c04c43fcad8f7a9bb6b23a62f1a6db550dce767fcf5ebccf9fb3feb92060e2b500","9ed1ebaaae93393e4d1d":"dd251234b59efa9341a3b6d5e369bb63eebacc052eb718df936e4b3813af70bc8494ebd31d3021da29a152dac351ab0cff1e54cdcf333cb8b56f066291b39bb0","c03e3618633c731bda60":"7fef9c8513a38c5027f83c49dca5fce911857b27fc1dad7b6de9efc4e1ed9d97aedddf7f70fc9d9133ef8dea05818c7b4e65ec00285c02ab8349f860fa00d85e","15bc82ff91c702aee839":"8edc26f9d8aab7682894b74e9d0fbe058179c84f6375e7f9bff73bb92b1c7115161281e797535f9f048a588348f216f4484192ac647c0d925b49d78e0582e0dd","c6ef493094fabf516fed":"4054843bc77c47d4e9bb514a54726f94c556903652a242932c241f656cebd3a898a960d4f5d0b2bd6d94f68f408c37b4f45c7da77d1dec6326eae08db99bbe53","268dd739eab405a1c199":"dccfd2d5cbaa05fa3c8adc6ae5e604c8314ea46b1435fe14dfa54ef6bdeaa22e884796f6d9026e45f4cb2f305135b46adb24bd957e95c64a96c4f774ae530f1b","96da11314826934fe373":"95b656122acd0616205ebdf9e7cd6f0e31b1f3051d6a1ad15c9f1a57ebb9a3b3d55bc7540c62a0e8760e0e45c2c91ca2a62d1905dcfae793b7e2b7d07f893ac9","cb84efc204e783cb80fd":"aa111b30aef5090ce583bc296c31fe25fc915923b4bc30bd724f6fc7315f7693301fbd77840642d744f97abae198971ebb12a6ef86a31494e9443c04bbc8f1ec","707d601efb06f95822dd":"f93e6848f14f9057dcdc767f383015f48ced6b9d863011ea5ec6bc5f83b866c896a015d5e5771fb8b7c15daeb77fac4252d12a4606befa74c107a17184ce71cc","805dc794b22d0cf09cea":"8df1099f8a57d6f20e787b147d33296efc8878264d0bc773d40bf3fcf5c3bf07c7736be61d2b8f951e6ccb35829b5b5a5827e12dffb92098d1ca7d4a0a69208d","e37097e2c6b98ded2d97":"60942076cacb0339e7d8f15dfd680d3f22e106d3d8460407436a42f8304ec96bab650a8e337c9df6257402ee4e6901aec9589358660ab2d8667cafe307766614","78256b0e38a094d2ae11":"88040d9dd15f05cace367e7720bae26d95c1af17eeabac1f20886eb8176ee5a909c9ab14d6f6217acf613347b083e4f92b15b7d578fae1ec55cd3a4f7b1f4b78","ac51002ee9439df80063":"a1d03a4b6985f47edf950374f797fd165d28563d5da3347ed15e6dfb0d46a50139ca4227b80820a9eb3ac7a8c15411b3829cfcd67efefda0b58981e5da77832d","d0ff4d522349cac35372":"679839ba4fcd866e8a40ce9464a64711faf85573f44754fc1ea88415bb153e00ef82ff46b7d328c80a9a13cd3a37dd6e9fcacbfe7ccfbe80286b7f50b7f6c445","ee819093a70798ce3e79":"17e14af141a372c33a16d1bd95494bef556f6c4da3c9c2d767a37edc4e0c16819692347b5064e27aa581e9bcfbcbfff8e6b1963fc196f7366cddb0588c3db7cd","c6434b66cebc57f5b1fe":"df702e0e595b7f31fb77e0a4d1c45dcf7e11664db1338d083626d061ec45b059b9b85e88fabedf9dbd475f0d52933c580c3213a93a793394f129981e8ad13bd1","a4ca4b35510589f715cb":"60df53686cc1730f8f3e285532c1901449623d58c0104017fcc1cccdda58dcccc30fe81d430ca597e2403e3953915c0f3d028b3eaceb1a0f6beebd209605179e","eea98262be2408a7dbd0":"c5efbf4d24a4659c0eec8690f98ba9ba726a7fe4faaf7ade45f53f936f4ba847f9b7df39aeddebe35310e88646bce855bad55aecda30f5a7e91cae1c8b58fc2e","51e5573ab7dc3c349720":"d66fbb2648933e08581161c2d5158dcf0f85340eed2e42d5d3ed056084a04fc43d32e18d247509e1d3085b8547c1f937add7eeb59d265633c0f2c02d59daf129","f1116a452b9eb3d8b78e":"b5c40375f699874260cb101e6f2c01f6e18f8380db22a64a9966e826914088affe40ccc7dd02775701c47187251f582f4f444fc5d7733065757863f7143e7ec5","35cf6b4a63bdf988cee1":"7e4cab8b80c81a7ca7d564f4dd3e3b0a87f3860ed2274a9cf416d995040bf5c32f16036fa37fdb66978ea1a298fcb9bba7dfb410fa12fc02efa75fdcec5eb454","349897005a3f48a8331c":"9aab2a78fab0424edb86c60911d9b1ea8317b47cd61d78d93f9a47c38c6c0a210466db6692552b6c1d563b1077b37385b68ed81894607d56389360ef33e7d315","9d8b15bb9166a21be6e8":"b96df8d24845ba297ff506fd004f6b9ed772a38807ce0fb66f9f426fdd62343a23a9ec8bbe92d3d7a42fcb5fa19d9f97b1ab2a15d5f369995b6b49685579e4fd","4dc1fa87b9e152e81ae2":"776ecae3a82af79b484d33473dd50389d32c192be71712ef85277d89e5578b1f00868f4b11726d838fc978d65bccaa6b9970d15cf44ce5a7a5236278c8124912","9b8ea25345aad02a98e2":"c0acb1c542f47398d4529db3d4bb04de1d51e4f6188c79330724294a6847718c2dd498efc1510eaceec079264fe16537e96a7e0efec07cabb63f8e78cc4c0a5e","22bda67791a7a6151525":"5264fbb9c06341a9047613eedf8d414945b1bf9f403d38c351a7a400f0afa866e84ff03eb3f735ec738fe1174b5c5853de1b79815a8e16cd7df57fa34476d21f","49b40f3703f4420b6d59":"b044d68d9eb23767f082ca28e183357dc8838f2a7bf9943459f8c15229c9e6598bb1a201610a8fe7047968ba07d8c363ae7357d5cf4a2097032cf9c4d719afe3","c8a756140aed9673a75b":"d6ed9621714d5ef2fdae361cb286e37248461f302d7cbfd6f0a28a6350c40dba15c4cb69ee566f2d049ccb0489c11d703487184884f23c3f4f30917e45ba4f0e","58586656a277aaedb0d8":"bb8c86e2e65d316c16ea89038373e526dc58ffc2f07ac1ac724897d2d796242747a2dc18d6402a36121cae8dd0e62852809f6ca53e1ec3ce576721f0999908d3","61c2a42c7bfcafc9128f":"4c567079d7720a45c7fa30b02ef18e4ce9ea9ac743b37ac7860cf082d6545fe70b01d84ec4999c538f22fbc4785f45771ffc3a00d552f96efe0266eab9b8c1e4","6419c7449dd007f284ae":"a0642740c3afce5dc6753c10737ed72511afb8a54ee3aa5bebbe82e3177608ec63b76f5f4fcff4b20f2e1e40b587d5575d51ab460275f73a84be11fbc877e2f0","f5dfb2709689dc46408b":"20ad1e88d655456019aedbae0e66c7ed8b1c2ece8e2b5164efeaeba3246a05e7714d57844e0f7bf7b7b890cb47532cc19ac8f00e182225470e78e1aa75553d45","ab5d693cd37bc54bbf3c":"d3c01638d4aaa622bff3faa3dc15a87f2c1ba014e2a2c82b567373b9ddfb771c8e4b70af870c5fa92915e74c10da53ed1beb5d1d9408b39df26082d986a96085","39bd2898b5834f9874d2":"e5d90071da7f54dd35293ee3483ceb5b227cd22a1c4c102b60feec4e505fecd15324e9a3ad9e06a988e38da5aff9d8fa625f16450b92da71bcff74bcb36e1710","93598030a95ab0f74828":"2bc298a37c9eb6bf54f79a24260df89dfe67854c07aeec607d3b8206a36ca11158329dd2ec85d76435af02cd9b72f4f7c193157bcd2712753be2c6477128cf2a","a05c7b77e50f5e23620e":"77955df5d961bfb4cab6b8d1011e672bf7d3917c179dedb4a9fdcc3458faedcb93ff858342cb4eb3f0dbe9a01b806a9a1a16f6c0e9cb70249d3c23a6e12648e5","10e13c3db5fdaa851692":"a194e6cb7cb8e1bda1dde4e273753a99aed6bfbc2c2ad9781e1344dae9f0cf535cc134f7bfd5bc5b133112b7b5a9198b6b010476b7d3b12548390603d5efce34","6e0210b4c52f182dbaf7":"d6c7f614a92fb110ae14d363fa17afcc9918025ee10d992e8389f63473609f723168de7bd7655f4b35a9f4ecf5f57f90c00c99fc1cca4424de023d32e9efb27d","1e625d3b7f7b9d1b5b79":"9fd10da4fa1a3cba877bdfb3044a8dde58cd5b28a28efb1ed106c9608a57b249f64f89b537089af73b4cf96d2e118bd659b857b93a7f9a8debc2aad4cf015612","23d0994d310036864f22":"4af60543a388d25a2bfeb9be82ddb3e885d52b2a2ae5c80f9984afe534d3e3c78c316be7134cbebe23b4d020a644de875517129dc42effe13102623c00d4ff75","9699c40f5f07f6a1aaba":"87517090316618f292dd96b9f374972c992befe90929b4df853671e0593fa85280bfeb3679ee4e612c9a8ffef26c5affd6bba309b2921b771dc07f190a2b775a","9e7c49bab15e1b3527a8":"1f9ae0c7d54f873d8fa63d3a1a6019fd13045a16db923d8e6746f9ea65ee8ff1863a089426443350a376ae9ab62b54d8f634b6e74572d6752ee0d05afa82c0c5","896049c852e197c3d87a":"3a7c49bdc3e0892d0317d666897a58fee784855732340026ded964cc1cf98a934b6e33aeb05a55bb62f0aa7538d4efa52b798f8cc54de2c6856297bbbb57b756","b357e45f4f0db27dfa95":"1db010285fa38cd57bd51579f77f02dd1a3d575f952048d0dd4691694683f0c8ce02602118345b1148b37f998dfc49227abf4488bdfe1bb3242d8ef746ab214e","4750ea1ca094bd1a7441":"8fa9790559019e8babc1229ea463ca528a503e0efebc1bbdf7e3c69e5a4da3a65d51d779eeaf5ac7b01cf68c9845792927d2719161a5fafaece08453971257e9","78c4ff7012e69295a563":"273aa18e6bbabc02d0c60d8602751b457e7b7a9d3677902f8fdc8746b2b02321ebaeaec35bc2936c3b5c77d6223f9f5d3cab3094607b98224d3d73aa34695b41","d69cb00c05dd49681249":"aa5e2a3e558b00ace9d19649d35dafa488a6577265ac1e8de680b4f4e86bd0a0d96c6fd6abcf6bd53220d8a680f34e4bb0a0e9e53df919d0e963491bb9fce5f6","fd35b4f94eeee4eb05f2":"1482ffd62076f3cdcb4f319f9544b52ca4e7d330892ab9bda8ff5250e407d84e97af0da93950aa2bc5495f6c484c446ee22eb5733d5ff2fd2a517d66b8d91157","d6f2abe261109b2f42fe":"5b48475e9878b5e3f01f71d9e206d8ce4a081fa0a075d5c151e627b2b8b7b93fbd93a70f9fa83adbd81b1dbd67c8c1ebe9876dcaffedf19fd0f2117e24418189","cbc59f556689cc99696f":"8df475939e82169289417df89217e0e258a104453b2f4d99393d3dcf1020ab05b7313761ff5fd541f33ad55dd1fc4813415d387276eb2f2caefa21fc62128f18","2ecf60ce425214699149":"3e1f954a4ed4cdfb4346ab5b96fa2b7b45e5300e6f55ebc843e8120d717f48f742c053d1d2d7bdd5e03cf2e8f26cb812f0eaa2c878e28a25062ccdb233548f90","c4cf4685cd0f882f3874":"f4ca0ae5b8ff7bae9b390e45684a6ccc91ef3d6fc16c958709eadcfa8cc96967df909cc871ae28c24181423655cfcf1e77a587b8124a89d1a4675778d024cbb7","8dbc3748b0bdc9a21eb8":"d4336432ecac3afb6646efdec3ada519566ae9fb0bda102f9656e69309ed2f0527fed5c50278536cabd4fe8464591f7ae09f16948474f5386b9195a2532726e6","974d52cd4662d9588137":"d2915ea565f0debd481ba8aa6e59f17d9c998dbaff6edf5bb0d71dc31ef7b6e5f127dbe6b8613616c740581620e706407aa33f139c52b253b91382e5dc1b25e6","e908f56bbbfb882113d9":"402961948da8c029496bb873ef780ff4fad14fc13619669bf19ade108c42d210675a3f512902fe9bad1eb208c36f4f32e2b1c71bb7eb5d652b22f115f9781cb6","7c957d7f4e65042edc7a":"4b62b7a13bfd7dc48f2b1adb97aec45b1b1c5309dec6d0680866012350e07688771e043451e100360028607fe4b7c3587c911142276fa212a2c74cb9306a1933","d9ad29e8227ee4c127c5":"a57c10ada74ddc356d6d3c0285732316293db1605d98445f94f0edb97396a39906ac9229756e188c342695eb33066b9d04086dfa2b7194ffc66bdf198cdbc047","6613f443df13745bd048":"c9fe7ea37958e806916958a3eb92627825d52d521368c57e41bf56e79b7b8c050f42b6288dec33d72483a6fbada2b4fbe5769ece2775bd2cddc4c8f3839923a1","31c4442a54415bce4653":"f2d06d7fdaf7433fa0922096c8dbf5a661e745e5e29ddb4c578aaa381bae520c54b587a81eb973deaf2304556921499efcb12ca6c9166ce2f3b26aed48186b93","025f3fb29dfec58833cf":"0df90096c52c76237c719e5a454d998042b01764e73cf8f9ee4629be576f3d400d58b5147370a0f42b823347059ee238f134d9a22021d811ecd79a64d8c0920f","7828daacb3150dad868b":"3ff75b3a1d15e73a34f0c6882a3b95b64f8bd7909e2a50929924b344d16d0bf8ed41491cedd2e5d7d0892e753ebff1b560fdbd17c1e6e28882d3fee0318fed0f","27138ebe9b3f1d821816":"9c5f211fdfe2aa4697877d27c79d18b16c194b881b0f6a3b1087b9888bbfb742359ddf07f8d3fa0b78b3a91335cf01be1ad65b78f84a5c28b2259bd9c9a75d46","a9db02dcecb8bba57ad8":"d10a3602ac323c821fde9004e6ad67c6db6db0ef25285536296e40c943ea0177c902533768e81060826c06c3f4ee82dfe1d3cfa06687957b7f8dd4b94cfca06c","100843fb90697be0fbbf":"adc24598f87b5d9b61a8b3cc1b9281152e927f99d16c310f6a3f9ee3095a6b93a63f9d98df05b103a3416bf886d60ec25706e436743fd8fc733f22bae3ff5dc5","e9661084ddb2ed0ea5c4":"17e8e60c5e47dfdceb28f5175c65827795c876490f0f3b3c688e737a617a3d1d8b366332a75b585df072d1d2a3249a59c831bc28c5f44677c2ee580fe08b15d6","ee127f84f8fbc686ba7e":"e5b8276afb818061674317198017dd46cde1f0782f9447f34d461cfdc06691197ea4ac4eec3ad17b146c13c231a18d4b944faa238227ac0f585cf01d7250673e","5f72dded7a6a131755a8":"f33671373d591dc1bb2394c9b31a7968bbceafbc67cf2d3b22f14bac2c748a9fb26703b1554f1627f414910738b798d28203ca97e5fc31dbbd39f20ae545252b","b2c89c81caa92aeffd1a":"606ebc2b9426fb3a2dfdaeff6d345a4869f3473a99662bc633e3a447d83f5626a8a113d010f2d288790bc8de0263555293df09451706e1fed5904a4b3d2c30e3","da53886bc1bf7ca696ef":"e8d5bf9652339feef31a4e97fe2ecba6dc4db3168d8b43c520ebcfadebbb86f7584e77b73eef10796159252c4d1522fdd9959d8e2770bd08f6733e18aeac4664","abf78b8ca41c89bb5c8a":"65603bf2f9a30679b35c9255ce20a449ea2b3861c2160608f6fba96b06f78ac39c2348ac8431b1aff6b79336831d5cbe5747ce446664c66479e8adaf158123cd","5f192ed1d95a65a802ce":"aa3488e22fed60862f70770c89387989a381e7f1d4849ee97dac9c11abbb7386e71eb784904b91681073f290240608ef571fcc902e981421b5874a1a2d24edae","c874e29f067677614d89":"d12541c3ddf9de28852d42d14bb8feb93029be94ae8082cc3a27de56832d335f7c27c712d9bf9bc3bbf3eb3cd93eaf8a7a4e6af845122c7ae2367855d47cc6a0","8803056e7f7be0e89919":"5ae795c6a85ef1f280c613f5a4708c5d7f0d4b2a7dcc3ec4bec4a5e46bb5876e6081cbcb36ba479058a9f98b4df16bb79de910a044f817f44d4ea12e615dae1b","773edacd9a9a36448e28":"8678bae4ebdbacf0cc2c558e48bf10802aa345c1e380f4ae2ab8cc35ad6bb4b39cd45162f47d89498ac2224b76c264ed4605527d94a535524a8c85b2276074a7","65150eeb014c0b3c4de6":"59531f28b109e3b94c232a53196958da6717bca1a46c589f484cef86a2362be11f156f4ee33b2039413ceb9741a6f8f9c27b0bc1db923ace9b1c02e1cf8768a7","379d2b5f75e0f5382f66":"24e1448655effe4eb51f1e0b13d84821b282f0ad80028c08359a75818a6077cb3d03a31023a9c1d9212f2c3a34e2ac1b0110c8d5becfa1e94ace30453d603a50","d2b341953982ab2deb3c":"4226e3738e1b2967bea1a25a29ee855b73dfefcf4bca7797201436c89fdbe777181e0939e5b9fdc9903fe60f579e3668c9640ffcfa34a9a898715a26bc86f292","dd3debbec6079555d473":"a37498381bcec88696d26dcc3832d44c9b9436e94806f0e949443f8c803361b56b451590fef368dd8af8d2c44374b25d3e7c4b6404a52a39094b4ffb127d3640"}}};
+
+/* ---------- schedule (from the Senior Assassin Calendar 2026-27) ---------- */
+const ROUNDS=[
+ {n:1,s:"2026-11-20",e:"2026-12-10",note:"Includes Thanksgiving Break (Nov 25 to Nov 30)"},
+ {n:2,s:"2026-12-15",e:"2027-01-11",note:"Starts during school finals. Includes Winter Break (Dec 19 to Jan 4)"},
+ {n:3,s:"2027-01-15",e:"2027-02-01",note:"MLK Day (Jan 18) is a no school day"},
+ {n:4,s:"2027-02-05",e:"2027-02-22",note:"Feb 15 no school, Feb 16 no contact day"},
+ {n:5,s:"2027-02-26",e:null,note:"End date to be decided"}];
+const TYPES={start:"Round start",end:"Round end",nofloaty:"No Floaty Day",bounty:"Bounty board check",break:"Break",safe:"Safe day",finals:"School finals",off:"No school or no contact day"};
+const DAYS={};
+function mark(d,type,label){(DAYS[d]=DAYS[d]||[]).push([type,label||TYPES[type]])}
+function span(a,b,type,label){for(let d=a;d<=b;d=addDays(d,1))mark(d,type,label)}
+function addDays(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d)}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+ROUNDS.forEach(r=>{mark(r.s,"start","Round "+r.n+" starts");if(r.e)mark(r.e,"end","Round "+r.n+" ends")});
+ROUNDS.forEach(r=>{if(r.e)mark(r.e,"bounty","Final bounty check (round end)")});
+ROUNDS.forEach(r=>{const last=r.e||addDays(r.s,56);for(let d=addDays(r.s,7);d<=last;d=addDays(d,1)){if(new Date(d+"T12:00:00").getDay()===0)mark(d,"bounty","Bounty board check (11:59 PM)")}});
+span("2026-11-25","2026-11-30","break","Thanksgiving Break");
+span("2026-12-19","2027-01-04","break","Winter Break");
+["2026-11-28","2026-12-05","2026-12-12","2026-12-19","2026-12-31","2027-01-09","2027-01-16","2027-01-23","2027-01-30",
+ "2027-02-06","2027-02-13","2027-02-20","2027-02-27"].forEach(d=>mark(d,"nofloaty"));
+mark("2026-11-25","off","No contact day");mark("2026-11-26","safe","Thanksgiving, safe day");mark("2026-11-27","off","No school");
+span("2026-12-15","2026-12-17","finals","Finals");mark("2026-12-18","finals","Make-up finals");
+mark("2026-12-25","safe","Christmas, safe day");mark("2026-12-31","break","New Year's Eve");mark("2027-01-01","break","New Year's Day");
+mark("2027-01-04","off","No contact day");mark("2027-01-18","off","MLK Day, no school");
+mark("2027-02-15","off","No school");mark("2027-02-16","off","No contact day");
+const SHORT={"Thanksgiving Break":"TG Break","Winter Break":"W Break","Thanksgiving, safe day":"Thanksgiving (safe day)","Christmas, safe day":"Christmas (safe day)"};
+const PRI=["start","end","safe","nofloaty","bounty","finals","off","break"];
+function tagsFor(d){return (DAYS[d]||[]).slice().sort((a,b)=>PRI.indexOf(a[0])-PRI.indexOf(b[0]))}
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmt(s,opt){return new Date(s+"T12:00:00").toLocaleDateString("en-US",opt||{weekday:"short",month:"short",day:"numeric"})}
+function daysBetween(a,b){return Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5)}
+function plural(n,w){return n+" "+w+(n===1?"":"s")}
+function roundState(today){
+  for(const r of ROUNDS){
+    if(today<r.s)return {phase:"before",r,days:daysBetween(today,r.s)};
+    if(!r.e||today<=r.e)return {phase:"in",r,days:r.e?daysBetween(today,r.e):null};
+  }
+  return {phase:"in",r:ROUNDS[ROUNDS.length-1],days:null};
+}
+const teamById={};DATA.teams.forEach(t=>teamById[t.id]=t);
+function alive(t){return t.out.some(o=>!o)}
+function namesHTML(t){return t.p.map((n,i)=>t.out[i]?"<s>"+esc(n)+"</s>":esc(n)).join(" &amp; ")}
+
+/* ---------- SHA-256 (small sync version, for the target vault) ---------- */
+const K=new Uint32Array(64);(function(){let n=2,i=0;const fr=x=>((x-Math.floor(x))*4294967296)>>>0;
+  while(i<64){let p=true;for(let j=2;j*j<=n;j++)if(n%j===0){p=false;break}if(p)K[i++]=fr(Math.cbrt(n));n++}})();
+const W=new Uint32Array(64);
+function sha256(str){
+  const m=new TextEncoder().encode(str),l=m.length,n=((l+9+63)>>6)<<6,b=new Uint8Array(n);b.set(m);b[l]=128;
+  const dv=new DataView(b.buffer);dv.setUint32(n-4,l*8);dv.setUint32(n-8,Math.floor(l/536870912));
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  for(let o=0;o<n;o+=64){
+    for(let i=0;i<16;i++)W[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const x=W[i-15],y=W[i-2];
+      W[i]=(W[i-16]+((x>>>7|x<<25)^(x>>>18|x<<14)^(x>>>3))+W[i-7]+((y>>>17|y<<15)^(y>>>19|y<<13)^(y>>>10)))>>>0}
+    let a=h0,bb=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for(let i=0;i<64;i++){
+      const t1=(h+((e>>>6|e<<26)^(e>>>11|e<<21)^(e>>>25|e<<7))+((e&f)^(~e&g))+K[i]+W[i])>>>0;
+      const t2=(((a>>>2|a<<30)^(a>>>13|a<<19)^(a>>>22|a<<10))+((a&bb)^(a&c)^(bb&c)))>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0}
+    h0=(h0+a)>>>0;h1=(h1+bb)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;h5=(h5+f)>>>0;h6=(h6+g)>>>0;h7=(h7+h)>>>0}
+  return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=>x.toString(16).padStart(8,"0")).join("");
+}
+const nrm=x=>x.normalize("NFD").toLowerCase().replace(/[^a-z]/g,"");
+function secretFor(c){
+  if(c.code===undefined)return null;
+  const code=c.code.toUpperCase().replace(/[^A-Z0-9]/g,"");return code.length<6?null:code;
+}
+function openVault(cred){
+  const v=DATA.vault,code=secretFor(typeof cred==="string"?{code:cred}:cred);
+  if(!code)return null;
+  let k=sha256(v.salt+":"+code);for(let i=0;i<v.iter;i++)k=sha256(k+v.salt);
+  const ct=v.e[sha256(k+"|id").slice(0,20)];if(!ct)return null;
+  let ks="";for(let i=0;ks.length<ct.length;i++)ks+=sha256(k+"|ks|"+i);
+  let out="";for(let i=0;i<ct.length;i+=2)out+=String.fromCharCode(parseInt(ct.substr(i,2),16)^parseInt(ks.substr(i,2),16));
+  try{return JSON.parse(out)}catch(e){return null}
+}
+
+function todayNote(today){
+  const st=roundState(today),types=tagsFor(today).map(t=>t[0]);
+  if(st.phase==="before")return "No round is live. Eliminations don't count until the next round starts.";
+  if(types.includes("safe"))return "Safe day. Check the calendar and rules before you make a move.";
+  if(types.includes("nofloaty"))return "No Floaty Day. Floaties give no protection today.";
+  return "Two visible floaties above the elbow keep you safe today.";
+}
+function safeCardHTML(today){
+  const nf=tagsFor(today).some(t=>t[0]==="nofloaty")&&roundState(today).phase==="in";
+  const rows=[
+   [nf?"out":"in",nf?"Open":"Safe","Wearing 2 visible floaties above the elbow"+(nf?". Not today: it's a No Floaty Day.":". They stop working on No Floaty Days.")],
+   ["in","Safe","On school property or at a school event, parking lots included. Anyone playing there is eliminated."],
+   ["in","Safe","Clocked in at work, or at a place of worship."],
+   ["out","Open","At club sports practice or the gym, unless you're wearing floaties."],
+   ["in","Safe","Between 10 PM and 6 AM. No playing during these hours."],
+   ["out","Open","In your car, if it's unlocked, parked with the engine off, and off school property. A locked car is off limits, and drive-bys are banned."],
+   ["out","Open","Leaving your house. Hunters may wait on the public sidewalk or street, or on your property only if the owner allows it. To come inside they need video of an adult who lives there inviting them in, knowing why."]];
+  return '<div class="panel stack"><h2>Am I safe right now?</h2><p class="muted">'+esc(todayNote(today))+'</p><ul class="list safe">'+
+    rows.map(r=>'<li><span class="chip t-'+r[0]+'">'+r[1]+"</span><span>"+esc(r[2])+"</span></li>").join("")+
+    '</ul><p class="small"><a href="#rules">Read the full rules</a></p></div>';
+}
+/* ---------- Today ---------- */
+function renderHome(today){
+  const st=roundState(today),tags=tagsFor(today);
+  $("todayDate").textContent=fmt(today,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+  if(st.phase==="before"){
+    $("roundLine").textContent="Round "+st.r.n+" starts in "+plural(st.days,"day");
+    $("roundSub").textContent=(st.r.n===1?"The game begins ":"Between rounds. Next round begins ")+fmt(st.r.s,{weekday:"long",month:"long",day:"numeric"})+".";
+  }else{
+    $("roundLine").textContent="Round "+st.r.n+(st.days===null?" is live":st.days===0?" ends today":": "+plural(st.days,"day")+" left");
+    $("roundSub").textContent=st.r.e?"Round "+st.r.n+" runs "+fmt(st.r.s)+" to "+fmt(st.r.e)+".":"End date to be decided.";
+  }
+  const types=tags.map(t=>t[0]);
+  $("todayChips").innerHTML=tags.length?tags.map(t=>'<span class="chip t-'+t[0]+'">'+esc(t[1])+"</span>").join(""):'<span class="chip">Regular day</span>';
+  $("todayNote").textContent=todayNote(today);
+  $("safeHome").innerHTML=safeCardHTML(today);
+
+  const tin=DATA.teams.filter(alive).length,pl=DATA.teams.reduce((n,t)=>n+t.out.filter(o=>!o).length,0),tot=DATA.teams.reduce((n,t)=>n+t.p.length,0);
+  $("stats").innerHTML=[[tin,"Teams still in"],[DATA.teams.length-tin,"Teams out"],[pl,"Players alive"],[tot-pl,"Players eliminated"]]
+    .map(s=>'<div class="stat"><b>'+s[0]+"</b><span>"+s[1]+"</span></div>").join("");
+
+  $("feed").innerHTML=DATA.feed.length?'<ul class="list">'+DATA.feed.slice(0,12).map(f=>{
+      const by=f.by&&teamById[f.by]?" by Team "+f.by+" ("+esc(teamById[f.by].p.join(" & "))+")":"";
+      return '<li><span class="when">'+fmt(f.d,{month:"short",day:"numeric"})+"</span><span><strong>"+esc(f.who)+"</strong> eliminated"+by+(f.note?'. <span class="muted">'+esc(f.note)+"</span>":"")+"</span></li>"}).join("")+"</ul>"
+    :'<div class="empty">No eliminations yet. '+(st.phase==="before"&&st.r.n===1?"Round 1 starts "+fmt(st.r.s)+".":"Be the first.")+"</div>";
+
+  $("bounty").innerHTML=DATA.bounty.length?'<ul class="list">'+DATA.bounty.map(b=>'<li><span><strong>'+esc(b.who)+"</strong>"+(b.note?' <span class="muted">'+esc(b.note)+"</span>":"")+"</span></li>").join("")+'</ul><p class="small muted">Anyone still in the game can eliminate a player on the bounty board.</p>'
+    :'<div class="empty">Nobody is on the bounty board yet. Every Sunday night, teams that did not eliminate at least one of their targets that week land here for the rest of the round, open to everyone.</div>';
+
+  const up=Object.keys(DAYS).filter(d=>d>today).sort().slice(0,6);
+  $("upcoming").innerHTML=up.map(d=>'<li><span class="when">'+fmt(d)+'</span><span class="chips">'+tagsFor(d).map(t=>'<span class="chip t-'+t[0]+'">'+esc(t[1])+"</span>").join("")+"</span></li>").join("");
+
+  const top=DATA.teams.filter(t=>t.k>0).sort((a,b)=>b.k-a.k||a.id-b.id).slice(0,8);
+  $("leaders").innerHTML=top.length?'<ul class="list">'+top.map(t=>'<li><span class="when">'+plural(t.k,"elim")+"</span><span>"+namesHTML(t)+"</span></li>").join("")+"</ul>"
+    :'<div class="empty">The leaderboard fills in after the first confirmed elimination.</div>';
+  $("foot").textContent="Standings last updated "+fmt(DATA.updated,{month:"long",day:"numeric",year:"numeric"})+". Dates are subject to change. Coordinators have the final say.";
+}
+
+/* ---------- Rules agreement (stored in this browser only) ---------- */
+const RULES_VERSION="2026-11-18";
+function agreeKey(res){return RULES_VERSION+":t"+res.t+(res.p!==undefined?":p"+res.p:"")}
+function agreedOn(res){try{const a=JSON.parse(localStorage.getItem("sa27rules")||"{}");return a[agreeKey(res)]||null}catch(e){return null}}
+function saveAgree(res,d){try{const a=JSON.parse(localStorage.getItem("sa27rules")||"{}");a[agreeKey(res)]=d;localStorage.setItem("sa27rules",JSON.stringify(a))}catch(e){}}
+function logOut(){try{localStorage.removeItem("sa27login")}catch(e){}$("dossier").innerHTML="";$("loginPanel").hidden=false;$("codeForm").reset();$("codeInput").focus()}
+function showGate(cred,res,today){
+  const me=teamById[res.t],who=res.p!==undefined?me.p[res.p]:null;
+  $("dossier").innerHTML='<div class="panel stack gate"><div class="eyebrow">'+(who?esc(who)+" · Team "+me.id:"Team "+me.id+": "+esc(me.p.join(" & ")))+'</div>'+
+    '<h2>We have updated our rules and regulations</h2>'+
+    '<p>Read through the updated rules below. You need to agree to them before you can see your target. Rules marked <span class="chip t-nofloaty">Updated</span> or <span class="chip t-start">New</span> changed on November 18, 2026.</p>'+
+    '<div class="rulescopy" tabindex="0" aria-label="Updated rules and regulations">'+$("rulesBody").innerHTML+'</div>'+
+    '<label class="check"><input type="checkbox" id="agRead"><span>I have read the updated rules and regulations, including the release at the top.</span></label>'+
+    '<label class="check"><input type="checkbox" id="agAge"><span>I am 18 or older, or my parent or guardian has read and agreed to these rules and the release.</span></label>'+
+    '<div class="chips"><button class="btn" type="button" id="agBtn" disabled>I agree to the rules and regulations</button><button class="btn ghost" type="button" id="agOut">Log out</button></div>'+
+    '<p class="small muted">If you don\'t agree, you can\'t keep playing. Message <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a> with questions.</p></div>';
+  const upd=()=>{$("agBtn").disabled=!($("agRead").checked&&$("agAge").checked)};
+  $("agRead").onchange=upd;$("agAge").onchange=upd;
+  $("agBtn").onclick=()=>{saveAgree(res,iso(new Date()));showDossier(cred,today,true,true);window.scrollTo(0,0)};
+  $("agOut").onclick=logOut;
+}
+
+/* ---------- My Target ---------- */
+function showDossier(cred,today,quiet,justAgreed){
+  const res=openVault(cred),err=$("codeErr");
+  if(!res||!teamById[res.t]){
+    $("dossier").innerHTML="";$("loginPanel").hidden=false;
+    if(!quiet){err.hidden=false;err.textContent="That code doesn't match a team. Check the code the coordinators sent you and try again."}
+    return false;
+  }
+  err.hidden=true;$("loginPanel").hidden=true;
+  try{localStorage.setItem("sa27login",JSON.stringify(cred))}catch(e){}
+  const agreed=agreedOn(res);
+  if(!agreed){showGate(cred,res,today);return true}
+  const me=teamById[res.t],who=res.p!==undefined?me.p[res.p]:null,mate=who?me.p.filter((n,i)=>i!==res.p)[0]:null;
+  let rd=null;for(const r of ROUNDS)if(res.r[r.n]!==undefined)rd=r;      // latest round with a target
+  const unlocked=rd&&today>=rd.s,tgt=rd?teamById[res.r[rd.n]]:null;
+  let body;
+  if(!alive(me))body='<div class="eyebrow">Status</div><div class="names">Your team is out</div><p class="muted">Thanks for playing. Keep an eye on the Today tab for the rest of the game.</p>';
+  else if(!tgt)body='<div class="eyebrow">Target</div><div class="names">Not assigned yet</div><p class="muted">New targets go out at the start of each round.</p>';
+  else if(!unlocked)body='<div class="eyebrow">Round '+rd.n+' target</div><div class="names">Locked until '+fmt(rd.s,{weekday:"long",month:"short",day:"numeric"})+'</div><p class="muted">You are logged in. Come back when the round starts and your target will be here.</p>';
+  else{
+    const st=roundState(today);
+    body='<div class="eyebrow">Round '+rd.n+' target · Team '+tgt.id+'</div><div class="names">'+namesHTML(tgt)+"</div>"+
+      '<div class="chips">'+tgt.p.map((n,i)=>'<span class="chip t-'+(tgt.out[i]?"out":"in")+'">'+esc(n.split(" ")[0])+": "+(tgt.out[i]?"eliminated":"still in")+"</span>").join("")+"</div>"+
+      (alive(tgt)?"<p>"+(rd.e?"Deadline: <strong>"+fmt(rd.e,{weekday:"long",month:"long",day:"numeric"})+"</strong>"+(st.r.n===rd.n&&st.days!==null?" ("+plural(st.days,"day")+" left)":"")+". ":"")+
+        'Film it, then DM the video and your target\'s name to <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a>.</p>'
+        :"<p>Your target team is already out. Your inherited target shows up here once the coordinators update it.</p>")+
+      (alive(tgt)?'<div class="chips">'+tgt.p.map((n,i)=>tgt.out[i]?"":'<button class="btn" type="button" data-got="'+i+'">I got '+esc(n.split(" ")[0])+"</button>").join("")+'</div><div id="dmOut"></div>'+
+        '<p class="small">Get at least one of them every week (checked Sunday nights at 11:59 PM, plus a final check when the round ends), or your team goes on the bounty board.</p>':"")+
+      '<p class="small muted">Off school property only. Non-realistic water guns only. No drive-bys.</p>';
+  }
+  const up=Object.keys(DAYS).filter(d=>d>=today).sort().slice(0,5);
+  const ups=DATA.updates||[];
+  $("dossier").innerHTML='<div class="stack" style="gap:20px"><div class="dossier"><div class="top"><strong>'+(who?esc(who)+" · Team "+me.id:"Team "+me.id+": "+esc(me.p.join(" & ")))+'</strong><span class="small">'+
+    (who&&mate?"Partner: "+esc(mate)+" · ":"")+(alive(me)?"Still in":"Out")+
+    '</span></div><div class="body stack'+(alive(me)&&tgt&&!unlocked?" locked":"")+'">'+
+    (justAgreed?'<div class="dmbox"><div class="eyebrow">Thanks for agreeing</div><p>Send this message to <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a> so the coordinators have a record of it.</p><pre id="agText"></pre><div class="chips"><button class="btn" type="button" id="agCopy">Copy message</button></div></div>':'')+
+    (res.u?'<p class="notice"><strong>Payment not marked as received yet.</strong> If you already paid, message @cch.seniorassassin27 so the coordinators can update it.</p>':"")+body+'</div></div>'+
+    safeCardHTML(today)+
+    '<div class="cols"><div class="panel stack"><h2>Your schedule</h2><ul class="list">'+up.map(d=>'<li><span class="when">'+(d===today?"Today":fmt(d))+'</span><span class="chips">'+
+      tagsFor(d).map(t=>'<span class="chip t-'+t[0]+'">'+esc(t[1])+"</span>").join("")+"</span></li>").join("")+'</ul><p class="small"><a href="#calendar">Full calendar</a></p></div>'+
+    '<div class="panel stack"><h2>Updates</h2>'+(ups.length?'<ul class="list">'+ups.map(u=>'<li><span class="when">'+fmt(u.d,{month:"short",day:"numeric"})+"</span><span>"+esc(u.t)+"</span></li>").join("")+"</ul>"
+      :'<div class="empty">No updates from the coordinators yet.</div>')+
+      '<p class="small muted">Coordinators also send updates by Instagram DM from <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a>. Follow the account so the DMs reach you.</p></div></div>'+
+    '<div><button class="btn ghost" type="button" id="forget">Log out</button></div></div>';
+  document.querySelectorAll("[data-got]").forEach(b=>b.onclick=()=>{
+    const n=tgt.p[+b.dataset.got],box=$("dmOut");
+    const msg="Senior Assassin elimination\nTeam "+me.id+" ("+me.p.join(" & ")+") eliminated "+n+" (Team "+tgt.id+") on "+fmt(iso(new Date()),{weekday:"long",month:"long",day:"numeric"})+".\nVideo attached.";
+    box.innerHTML='<div class="dmbox"><div class="eyebrow">Send this with your video</div><pre id="dmText"></pre><div class="chips"><button class="btn" type="button" id="dmCopy">Copy message</button>'+
+      '<a class="btn ghost" href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener" style="text-decoration:none">Open @cch.seniorassassin27</a></div>'+
+      '<p class="small muted">This does not send anything. DM the message and your video to the coordinators. It counts once they confirm the video.</p></div>';
+    $("dmText").textContent=msg;
+    $("dmCopy").onclick=()=>{const done=ok=>{$("dmCopy").textContent=ok?"Copied":"Select the text above to copy it"};
+      try{navigator.clipboard.writeText(msg).then(()=>done(true),()=>done(false))}catch(e){done(false)}};
+  });
+  $("forget").onclick=logOut;
+  if(justAgreed){const amsg="Senior Assassin rules agreement\n"+(who?who+", ":"")+"Team "+me.id+" ("+me.p.join(" & ")+") agreed to the updated rules and regulations (version "+RULES_VERSION+") on "+fmt(agreed,{weekday:"long",month:"long",day:"numeric",year:"numeric"})+".";
+    $("agText").textContent=amsg;
+    $("agCopy").onclick=()=>{const done=ok=>{$("agCopy").textContent=ok?"Copied":"Select the text above to copy it"};
+      try{navigator.clipboard.writeText(amsg).then(()=>done(true),()=>done(false))}catch(e){done(false)}};}
+  return true;
+}
+
+/* ---------- Teams ---------- */
+let filter="all";
+function renderTeams(){
+  const q=$("q").value.trim().toLowerCase();
+  const rows=DATA.teams.filter(t=>(filter==="all"||(filter==="in")===alive(t))&&(!q||("team "+t.id+" #"+t.id+" "+t.p.join(" ")).toLowerCase().includes(q)));
+  $("teamCount").textContent="Showing "+rows.length+" of "+plural(DATA.teams.length,"team")+".";
+  $("roster").innerHTML=rows.length?rows.map(t=>'<div class="team'+(alive(t)?"":" gone")+'"><span class="no">#'+t.id+'</span><span class="who">'+namesHTML(t)+"</span>"+
+    (t.k?'<span class="kills">'+plural(t.k,"elim")+"</span>":"")+'<span class="chip t-'+(alive(t)?"in":"out")+'">'+(alive(t)?"In":"Out")+"</span></div>").join("")
+    :'<div class="empty">No team matches that search.</div>';
+}
+
+/* ---------- Calendar ---------- */
+function renderCalendar(today){
+  const st=roundState(today);
+  $("sched").innerHTML=ROUNDS.map(r=>'<tr'+(st.phase==="in"&&st.r.n===r.n?' class="cur"':"")+"><td>Round "+r.n+"</td><td>"+fmt(r.s,{weekday:"short",month:"short",day:"numeric",year:"numeric"})+"</td><td>"+
+    (r.e?fmt(r.e,{weekday:"short",month:"short",day:"numeric",year:"numeric"}):"To be decided")+"</td><td>"+esc(r.note)+"</td></tr>").join("");
+  $("legend").innerHTML=Object.keys(TYPES).map(k=>'<span class="chip t-'+k+'">'+TYPES[k]+"</span>").join("");
+  const months=[[2026,10],[2026,11],[2027,0],[2027,1]];
+  $("months").innerHTML=months.map(([y,m])=>{
+    const first=new Date(y,m,1),n=new Date(y,m+1,0).getDate();
+    let h='<div class="panel stack"><h3>'+first.toLocaleDateString("en-US",{month:"long",year:"numeric"})+'</h3><div class="cal">'+
+      ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>'<div class="dow">'+d+"</div>").join("");
+    for(let i=0;i<first.getDay();i++)h+='<div class="day blank"></div>';
+    for(let d=1;d<=n;d++){
+      const s=iso(new Date(y,m,d)),tg=tagsFor(s);
+      h+='<div class="day'+(tg.length?" t-"+tg[0][0]:"")+(s===today?" is-today":"")+(s<today?" past":"")+'"><b>'+d+"</b>"+tg.map(t=>"<span>"+esc(SHORT[t[1]]||t[1])+"</span>").join("")+"</div>";
+    }
+    return h+"</div></div>"}).join("");
+}
+
+/* ---------- routing + boot ---------- */
+const VIEWS=["home","my-target","teams","calendar","rules"];
+function route(){
+  let v=location.hash.replace("#","");if(!VIEWS.includes(v))v="home";
+  VIEWS.forEach(x=>$("v-"+x).classList.toggle("on",x===v));
+  document.querySelectorAll("#tabs a").forEach(a=>{if(a.getAttribute("href")==="#"+v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+}
+if(typeof document!=="undefined"){
+  const today=iso(new Date());
+  renderHome(today);renderTeams();renderCalendar(today);route();
+  window.addEventListener("hashchange",()=>{route();window.scrollTo(0,0)});
+  $("q").addEventListener("input",renderTeams);
+  document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.f;
+    document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));renderTeams()}));
+  const go=(cred,btn,label)=>{btn.textContent="Checking…";setTimeout(()=>{showDossier(cred,iso(new Date()));btn.textContent=label},20)};
+  $("codeForm").addEventListener("submit",e=>{e.preventDefault();const c=$("codeInput").value;
+    if(!c.trim()){$("codeErr").hidden=false;$("codeErr").textContent="Enter your team's access code first.";return}
+    go({code:c},$("codeBtn"),"Log in")});
+  let saved=null;try{saved=JSON.parse(localStorage.getItem("sa27login")||"null")}catch(e){}
+  if(saved&&typeof saved==="object"&&saved.code===undefined){try{localStorage.removeItem("sa27login")}catch(e){}saved=null}
+  if(saved&&typeof saved==="object")setTimeout(()=>showDossier(saved,today,true),50);
+}
+</script>
+</body>
+</html>
