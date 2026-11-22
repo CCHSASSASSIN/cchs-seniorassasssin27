@@ -469,7 +469,8 @@ function showDossier(cred,today,quiet,justAgreed){
       (alive(tgt)?"<p>"+(rd.e?"Deadline: <strong>"+fmt(rd.e,{weekday:"long",month:"long",day:"numeric"})+"</strong>"+(st.r.n===rd.n&&st.days!==null?" ("+plural(st.days,"day")+" left)":"")+". ":"")+
         'Film it, then DM the video and your target\'s name to <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a>.</p>'
         :"<p>Your target team is already out. Your inherited target shows up here once the coordinators update it.</p>")+
-      (alive(tgt)?'<div class="chips">'+tgt.p.map((n,i)=>tgt.out[i]?"":'<button class="btn" type="button" data-got="'+i+'">I got '+esc(n.split(" ")[0])+"</button>").join("")+'</div><div id="dmOut"></div>'+
+      (alive(tgt)?'<div class="chips">'+tgt.p.map((n,i)=>tgt.out[i]?"":'<button class="btn" type="button" data-got="'+i+'">I got '+esc(n.split(" ")[0])+"</button>").join("")+
+        (tgt.p.length>1&&tgt.p.every((n,i)=>!tgt.out[i])?'<button class="btn" type="button" data-got="'+tgt.p.map((n,i)=>i).join(",")+'">Got both</button>':"")+'</div><div id="dmOut"></div>'+
         '<p class="small">Get at least one of them every week (checked Sunday nights at 11:59 PM, plus a final check when the round ends), or your team goes on the bounty board.</p>':"")+
       '<p class="small muted">Off school property only. Non-realistic water guns only. No drive-bys.</p>';
   }
@@ -488,8 +489,9 @@ function showDossier(cred,today,quiet,justAgreed){
       '<p class="small muted">Coordinators also send updates by Instagram DM from <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a>. Follow the account so the DMs reach you.</p></div></div>'+
     '<div><button class="btn ghost" type="button" id="forget">Log out</button></div></div>';
   document.querySelectorAll("[data-got]").forEach(b=>b.onclick=()=>{
-    const n=tgt.p[+b.dataset.got],box=$("dmOut");
-    const msg="Senior Assassin elimination\nTeam "+me.id+" ("+me.p.join(" & ")+") eliminated "+n+" (Team "+tgt.id+") on "+fmt(iso(new Date()),{weekday:"long",month:"long",day:"numeric"})+".\nVideo attached.";
+    const ix=b.dataset.got.split(",").map(Number),both=ix.length>1,n=ix.map(i=>tgt.p[i]).join(" and "),box=$("dmOut");
+    const msg="Senior Assassin elimination\nTeam "+me.id+" ("+me.p.join(" & ")+") eliminated "+(both?"BOTH targets, ":"")+n+" (Team "+tgt.id+") on "+fmt(iso(new Date()),{weekday:"long",month:"long",day:"numeric"})+"."+
+      (both?"\nTeam "+tgt.id+" is fully out.\nVideos attached.":"\nVideo attached.");
     box.innerHTML='<div class="dmbox"><div class="eyebrow">Send this with your video</div><pre id="dmText"></pre><div class="chips"><button class="btn" type="button" id="dmCopy">Copy message</button>'+
       '<a class="btn ghost" href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener" style="text-decoration:none">Open @cch.seniorassassin27</a></div>'+
       '<p class="small muted">This does not send anything. DM the message and your video to the coordinators. It counts once they confirm the video.</p></div>';
