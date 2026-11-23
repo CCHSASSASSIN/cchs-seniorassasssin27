@@ -83,6 +83,9 @@ ul.list li:first-child{border-top:0}
 .when{flex:none;width:92px;font-size:.82rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .empty{padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:.92rem}
 .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}
+.btn.purge{background:#d1206f;color:#fff}
+.purgebox{border:2px solid #d1206f;border-radius:10px;padding:12px;background:color-mix(in srgb,#d1206f 10%,var(--surface));display:flex;flex-direction:column;gap:10px}
+.purgebox select{padding:10px 12px;border-radius:10px;border:2px solid #d1206f;background:var(--bg);color:var(--ink);font-size:1rem;max-width:100%}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .btn:hover{filter:brightness(1.07)}
 
@@ -273,7 +276,7 @@ ol.rules .chip{margin-right:6px;vertical-align:1px}
 <li><p><span class="chip t-start">New</span>Use the word "eliminate," not "kill" or "shoot," in posts, DMs, and group chats. Never post or send anything that could be read as a real threat.</p></li>
 <li><p><span class="chip t-start">New</span>By playing, you agree that elimination videos you appear in may be sent to and reviewed by the coordinators, and may be posted on @cch.seniorassassin27. Do not film or post bystanders or the inside of anyone's home. You may ask the coordinators to take down any video you appear in.</p></li>
 <li><p><span class="chip t-start">New</span>Coordinators may remove any player for unsafe or illegal behavior. Coordinators may update these rules during the game; changes will be announced on @cch.seniorassassin27.</p></li>
-  <li><p><span class="chip t-purge">New</span><strong>PURGE DAYS:</strong> once a month there is a Purge Day. On a Purge Day (12:00 AM to 11:59 PM), <strong>anyone still in the game can eliminate ANY other player still in the game</strong>, not just their target (you can't eliminate your own partner). <strong>EVERY PURGE DAY IS ALSO A NO FLOATY DAY:</strong> floaties do not protect you. All other safe rules still apply (school property and events, clocked in at work, places of worship, inside your house, and rules 3 and 7). Purge eliminations count: the eliminator gets credit, and it counts as an elimination for that week's bounty board check. Targets do not change, except the normal inheriting when a team is fully eliminated. Send your video to @cch.seniorassassin27 with the name of who you eliminated, like any other elimination. <strong>PURGE DAYS: TUESDAY, DECEMBER 8; SATURDAY, JANUARY 16; WEDNESDAY, FEBRUARY 10; WEDNESDAY, MARCH 17.</strong> Later dates will be announced on the <a href="#calendar">calendar</a>.</p></li>
+  <li><p><span class="chip t-purge">New</span><strong>PURGE DAYS:</strong> once a month there is a Purge Day. On a Purge Day (12:00 AM to 11:59 PM), <strong>anyone still in the game can eliminate ANY other player still in the game</strong>, not just their target (you can't eliminate your own partner). <strong>EVERY PURGE DAY IS ALSO A NO FLOATY DAY:</strong> floaties do not protect you. All other safe rules still apply (school property and events, clocked in at work, places of worship, inside your house, and rules 3 and 7). Purge eliminations count: the eliminator gets credit, and it counts as an elimination for that week's bounty board check. Targets do not change, except the normal inheriting when a team is fully eliminated. Send your video to @cch.seniorassassin27 with the name of who you eliminated, like any other elimination. <strong>PURGE DAYS: TUESDAY, DECEMBER 8; SATURDAY, JANUARY 16; WEDNESDAY, FEBRUARY 10; FRIDAY, MARCH 5.</strong> Later dates will be announced on the <a href="#calendar">calendar</a>.</p></li>
   </ol>
   </div>
 </section>
@@ -303,7 +306,7 @@ span("2026-11-25","2026-11-30","break","Thanksgiving Break");
 span("2026-12-19","2027-01-04","break","Winter Break");
 ["2026-11-28","2026-12-05","2026-12-12","2026-12-19","2026-12-31","2027-01-09","2027-01-16","2027-01-23","2027-01-30",
  "2027-02-06","2027-02-13","2027-02-20","2027-02-27"].forEach(d=>mark(d,"nofloaty"));
-["2026-12-08","2027-01-16","2027-02-10","2027-03-17"].forEach(d=>{mark(d,"purge","PURGE DAY: anyone can eliminate anyone");if(!(DAYS[d]||[]).some(t=>t[0]==="nofloaty"))mark(d,"nofloaty")});
+["2026-12-08","2027-01-16","2027-02-10","2027-03-05"].forEach(d=>{mark(d,"purge","PURGE DAY: anyone can eliminate anyone");if(!(DAYS[d]||[]).some(t=>t[0]==="nofloaty"))mark(d,"nofloaty")});
 mark("2026-11-25","off","No contact day");mark("2026-11-26","safe","Thanksgiving, safe day");mark("2026-11-27","off","No school");
 span("2026-12-15","2026-12-17","finals","Finals");mark("2026-12-18","finals","Make-up finals");
 mark("2026-12-25","safe","Christmas, safe day");mark("2026-12-31","break","New Year's Eve");mark("2027-01-01","break","New Year's Day");
@@ -478,11 +481,16 @@ function showDossier(cred,today,quiet,justAgreed){
         '<p class="small">Get at least one of them every week (checked Sunday nights at 11:59 PM, plus a final check when the round ends), or your team goes on the bounty board.</p>':"")+
       '<p class="small muted">Off school property only. Non-realistic water guns only. No drive-bys.</p>';
   }
+  const isPurge=alive(me)&&tagsFor(today).some(t=>t[0]==="purge")&&roundState(today).phase==="in";
+  const purgeHTML=isPurge?'<div class="purgebox"><div class="eyebrow">Purge Day</div><p><strong>Today anyone still in can eliminate anyone.</strong> No floaties. Got someone who isn\'t your target? Pick them and build your message.</p>'+
+    '<select id="purgePick"><option value="">Who did you get?</option>'+DATA.teams.filter(t=>t.id!==me.id).flatMap(t=>t.p.map((n,i)=>t.out[i]?null:[n,t.id,i])).filter(Boolean)
+      .sort((a,b)=>a[0].localeCompare(b[0])).map(x=>'<option value="'+x[1]+':'+x[2]+'">'+esc(x[0])+' (Team '+x[1]+')</option>').join("")+'</select>'+
+    '<div class="chips"><button class="btn purge" type="button" id="purgeGo">Purge Day: I got them</button></div><div id="purgeOut"></div></div>':"";
   const up=Object.keys(DAYS).filter(d=>d>=today).sort().slice(0,5);
   const ups=DATA.updates||[];
   $("dossier").innerHTML='<div class="stack" style="gap:20px"><div class="dossier"><div class="top"><strong>'+(who?esc(who)+" · Team "+me.id:"Team "+me.id+": "+esc(me.p.join(" & ")))+'</strong><span class="small">'+
     (who&&mate?"Partner: "+esc(mate)+" · ":"")+(alive(me)?"Still in":"Out")+
-    '</span></div><div class="body stack'+(alive(me)&&tgt&&!unlocked?" locked":"")+'">'+
+    '</span></div><div class="body stack'+(alive(me)&&tgt&&!unlocked?" locked":"")+'">'+purgeHTML+
     (justAgreed?'<div class="dmbox"><div class="eyebrow">Thanks for agreeing</div><p>Send this message to <a href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener">@cch.seniorassassin27</a> so the coordinators have a record of it.</p><pre id="agText"></pre><div class="chips"><button class="btn" type="button" id="agCopy">Copy message</button></div></div>':'')+
     (res.u?'<p class="notice"><strong>Payment not marked as received yet.</strong> Your target is hidden until it is. If you already paid, message @cch.seniorassassin27 so the coordinators can update it.</p>':"")+body+'</div></div>'+
     safeCardHTML(today)+
@@ -503,6 +511,18 @@ function showDossier(cred,today,quiet,justAgreed){
     $("dmCopy").onclick=()=>{const done=ok=>{$("dmCopy").textContent=ok?"Copied":"Select the text above to copy it"};
       try{navigator.clipboard.writeText(msg).then(()=>done(true),()=>done(false))}catch(e){done(false)}};
   });
+  if(isPurge)$("purgeGo").onclick=()=>{
+    const v=$("purgePick").value,box=$("purgeOut");
+    if(!v){box.innerHTML='<p class="small">Pick who you eliminated first.</p>';return}
+    const [tid,pi]=v.split(":").map(Number),vt=teamById[tid],vn=vt.p[pi];
+    const msg="PURGE DAY elimination\nTeam "+me.id+" ("+me.p.join(" & ")+") eliminated "+vn+" (Team "+tid+") on "+fmt(iso(new Date()),{weekday:"long",month:"long",day:"numeric"})+".\nVideo attached.";
+    box.innerHTML='<div class="dmbox"><div class="eyebrow">Send this with your video</div><pre id="purgeText"></pre><div class="chips"><button class="btn purge" type="button" id="purgeCopy">Copy message</button>'+
+      '<a class="btn ghost" href="https://www.instagram.com/cch.seniorassassin27/" target="_blank" rel="noopener" style="text-decoration:none">Open @cch.seniorassassin27</a></div>'+
+      '<p class="small muted">This does not send anything. DM the message and your video to the coordinators. It counts once they confirm the video.</p></div>';
+    $("purgeText").textContent=msg;
+    $("purgeCopy").onclick=()=>{const done=ok=>{$("purgeCopy").textContent=ok?"Copied":"Select the text above to copy it"};
+      try{navigator.clipboard.writeText(msg).then(()=>done(true),()=>done(false))}catch(e){done(false)}};
+  };
   $("forget").onclick=logOut;
   if(justAgreed){const amsg="Senior Assassin rules agreement\n"+(who?who+", ":"")+"Team "+me.id+" ("+me.p.join(" & ")+") agreed to the updated rules and regulations (version "+RULES_VERSION+") on "+fmt(agreed,{weekday:"long",month:"long",day:"numeric",year:"numeric"})+".";
     $("agText").textContent=amsg;
