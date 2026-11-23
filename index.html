@@ -71,7 +71,7 @@ section.view.on{display:flex}
 .chip{--c:var(--off);display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.8rem;font-weight:700;
   color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 45%,var(--surface))}
 .t-start{--c:var(--go)} .t-end{--c:var(--out)} .t-nofloaty{--c:var(--warn)} .t-bounty{--c:var(--out)} .t-break{--c:var(--water)}
-.t-safe{--c:var(--safe)} .t-finals{--c:var(--finals)} .t-off{--c:var(--off)} .t-in{--c:var(--go)} .t-out{--c:var(--out)}
+.t-purge{--c:#d1206f} .t-safe{--c:var(--safe)} .t-finals{--c:var(--finals)} .t-off{--c:var(--off)} .t-in{--c:var(--go)} .t-out{--c:var(--out)}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .stat b{display:block;font-family:var(--display);font-size:1.7rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
@@ -273,6 +273,7 @@ ol.rules .chip{margin-right:6px;vertical-align:1px}
 <li><p><span class="chip t-start">New</span>Use the word "eliminate," not "kill" or "shoot," in posts, DMs, and group chats. Never post or send anything that could be read as a real threat.</p></li>
 <li><p><span class="chip t-start">New</span>By playing, you agree that elimination videos you appear in may be sent to and reviewed by the coordinators, and may be posted on @cch.seniorassassin27. Do not film or post bystanders or the inside of anyone's home. You may ask the coordinators to take down any video you appear in.</p></li>
 <li><p><span class="chip t-start">New</span>Coordinators may remove any player for unsafe or illegal behavior. Coordinators may update these rules during the game; changes will be announced on @cch.seniorassassin27.</p></li>
+  <li><p><span class="chip t-purge">New</span><strong>PURGE DAYS:</strong> once a month there is a Purge Day. On a Purge Day (12:00 AM to 11:59 PM), <strong>anyone still in the game can eliminate ANY other player still in the game</strong>, not just their target (you can't eliminate your own partner). <strong>EVERY PURGE DAY IS ALSO A NO FLOATY DAY:</strong> floaties do not protect you. All other safe rules still apply (school property and events, clocked in at work, places of worship, inside your house, and rules 3 and 7). Purge eliminations count: the eliminator gets credit, and it counts as an elimination for that week's bounty board check. Targets do not change, except the normal inheriting when a team is fully eliminated. Send your video to @cch.seniorassassin27 with the name of who you eliminated, like any other elimination. <strong>PURGE DAYS: TUESDAY, DECEMBER 8; SATURDAY, JANUARY 16; WEDNESDAY, FEBRUARY 10; WEDNESDAY, MARCH 17.</strong> Later dates will be announced on the <a href="#calendar">calendar</a>.</p></li>
   </ol>
   </div>
 </section>
@@ -289,7 +290,7 @@ const ROUNDS=[
  {n:3,s:"2027-01-15",e:"2027-02-01",note:"MLK Day (Jan 18) is a no school day"},
  {n:4,s:"2027-02-05",e:"2027-02-22",note:"Feb 15 no school, Feb 16 no contact day"},
  {n:5,s:"2027-02-26",e:null,note:"End date to be decided"}];
-const TYPES={start:"Round start",end:"Round end",nofloaty:"No Floaty Day",bounty:"Bounty board check",break:"Break",safe:"Safe day",finals:"School finals",off:"No school or no contact day"};
+const TYPES={start:"Round start",purge:"Purge Day",end:"Round end",nofloaty:"No Floaty Day",bounty:"Bounty board check",break:"Break",safe:"Safe day",finals:"School finals",off:"No school or no contact day"};
 const DAYS={};
 function mark(d,type,label){(DAYS[d]=DAYS[d]||[]).push([type,label||TYPES[type]])}
 function span(a,b,type,label){for(let d=a;d<=b;d=addDays(d,1))mark(d,type,label)}
@@ -302,13 +303,14 @@ span("2026-11-25","2026-11-30","break","Thanksgiving Break");
 span("2026-12-19","2027-01-04","break","Winter Break");
 ["2026-11-28","2026-12-05","2026-12-12","2026-12-19","2026-12-31","2027-01-09","2027-01-16","2027-01-23","2027-01-30",
  "2027-02-06","2027-02-13","2027-02-20","2027-02-27"].forEach(d=>mark(d,"nofloaty"));
+["2026-12-08","2027-01-16","2027-02-10","2027-03-17"].forEach(d=>{mark(d,"purge","PURGE DAY: anyone can eliminate anyone");if(!(DAYS[d]||[]).some(t=>t[0]==="nofloaty"))mark(d,"nofloaty")});
 mark("2026-11-25","off","No contact day");mark("2026-11-26","safe","Thanksgiving, safe day");mark("2026-11-27","off","No school");
 span("2026-12-15","2026-12-17","finals","Finals");mark("2026-12-18","finals","Make-up finals");
 mark("2026-12-25","safe","Christmas, safe day");mark("2026-12-31","break","New Year's Eve");mark("2027-01-01","break","New Year's Day");
 mark("2027-01-04","off","No contact day");mark("2027-01-18","off","MLK Day, no school");
 mark("2027-02-15","off","No school");mark("2027-02-16","off","No contact day");
-const SHORT={"Thanksgiving Break":"TG Break","Winter Break":"W Break","Thanksgiving, safe day":"Thanksgiving (safe day)","Christmas, safe day":"Christmas (safe day)"};
-const PRI=["start","end","safe","nofloaty","bounty","finals","off","break"];
+const SHORT={"PURGE DAY: anyone can eliminate anyone":"PURGE DAY","Thanksgiving Break":"TG Break","Winter Break":"W Break","Thanksgiving, safe day":"Thanksgiving (safe day)","Christmas, safe day":"Christmas (safe day)"};
+const PRI=["start","purge","end","safe","nofloaty","bounty","finals","off","break"];
 function tagsFor(d){return (DAYS[d]||[]).slice().sort((a,b)=>PRI.indexOf(a[0])-PRI.indexOf(b[0]))}
 
 /* ---------- helpers ---------- */
@@ -367,6 +369,7 @@ function todayNote(today){
   const st=roundState(today),types=tagsFor(today).map(t=>t[0]);
   if(st.phase==="before")return "No round is live. Eliminations don't count until the next round starts.";
   if(types.includes("safe"))return "Safe day. Check the calendar and rules before you make a move.";
+  if(types.includes("purge"))return "PURGE DAY. Anyone still in the game can eliminate you, and floaties give no protection today.";
   if(types.includes("nofloaty"))return "No Floaty Day. Floaties give no protection today.";
   return "Two visible floaties above the elbow keep you safe today.";
 }
@@ -378,6 +381,7 @@ function safeCardHTML(today){
    ["in","Safe","Clocked in at work, or at a place of worship."],
    ["out","Open","At club sports practice or the gym, unless you're wearing floaties."],
    ["out","Open","In your car, if it's unlocked, parked with the engine off, and off school property. A locked car is off limits, and drive-bys are banned."],
+   ...(tagsFor(today).some(t=>t[0]==="purge")&&roundState(today).phase==="in"?[["out","Open","PURGE DAY: any player still in the game can eliminate you today, not just your hunter."]]:[]),
    ["out","Open","Outside at home (driveway, lawn, open garage). Hunters must wait on the public sidewalk or street, not on your property, but can come onto it if they see you outside. Inside your house you're safe."]];
   return '<div class="panel stack"><h2>Am I safe right now?</h2><p class="muted">'+esc(todayNote(today))+'</p><ul class="list safe">'+
     rows.map(r=>'<li><span class="chip t-'+r[0]+'">'+r[1]+"</span><span>"+esc(r[2])+"</span></li>").join("")+
